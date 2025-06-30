@@ -1,31 +1,35 @@
-// app/(auth)/signin.tsx
+import Logo from "@/assets/images/logosaludo.svg";
 import { useRouter } from "expo-router";
 import * as SecureStorage from "expo-secure-store";
 import { useContext, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SignInApi } from "../api/auth";
 import { authContext } from "../context/authContext";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSigningIn, setIsSigningIn] = useState(false); // Estado local para el proceso de login en el botón
-  const { setIsLogin } = useContext(authContext); 
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const { setIsLogin } = useContext(authContext);
   const router = useRouter();
 
   const handleLogin = async () => {
-    setIsSigningIn(true); 
+    setIsSigningIn(true);
     try {
-    
       const res = await SignInApi(email, password);
-      
+
       if (!res?.token) {
-        Alert.alert("Error de Login", res?.msg || "Credenciales incorrectas.");
+        Alert.alert("Error de acceso", res?.msg || "Credenciales incorrectas.");
         return;
       }
-      console.log("Token recibido:", res.token);
 
-      //  Guarda el token
       await SecureStorage.setItemAsync("token", res.token);
 
       const userReq = await fetch("http://192.168.0.20:3402/getUser", {
@@ -34,29 +38,32 @@ export default function LoginScreen() {
           authorization: `Bearer ${res.token}`,
         },
       });
-      
-      const userRes = await userReq.json();
-      console.log("Datos del usuario recibidos:", userRes);
 
-       setIsLogin(true);
-      
-      router.replace("/(tabs)/home"); 
-      
-      
-      
+      const userRes = await userReq.json();
+      console.log(userRes);
+
+      setIsLogin(true);
+      router.replace("/(tabs)/home");
+
     } catch (error) {
       console.error("Error en el login:", error);
-      Alert.alert("Error", "No se pudo conectar con el servidor. Inténtalo de nuevo.");
-      await SecureStorage.deleteItemAsync("token"); 
-    } 
+      Alert.alert("Error", "No se pudo conectar con el servidor. Inténtalo nuevamente.");
+      await SecureStorage.deleteItemAsync("token");
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Iniciar Sesión</Text>
-      
+    <View className="flex-1 justify-center items-center p-6 bg-white">
+
+      <Logo width={150} height={150} />
+
+      <Text className="text-3xl font-extrabold text-primary mt-4">Iniciar sesión</Text>
+      <Text className="text-lg text-gray-500 mb-6">¡Nos alegra verte otra vez!</Text>
+
       <TextInput
-        style={styles.input}
+        className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-700 shadow"
         placeholder="Correo electrónico"
         placeholderTextColor="#aaa"
         value={email}
@@ -64,86 +71,32 @@ export default function LoginScreen() {
         autoCapitalize="none"
         keyboardType="email-address"
       />
+
       <TextInput
-        style={styles.input}
+        className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-700"
         placeholder="Contraseña"
         placeholderTextColor="#aaa"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
-      
-      <TouchableOpacity 
-        onPress={handleLogin} 
+
+      <TouchableOpacity
+        onPress={handleLogin}
         disabled={isSigningIn}
-        style={styles.button}
+        className="w-full h-14 rounded-xl bg-primary flex justify-center items-center mb-4"
       >
         {isSigningIn ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Ingresar</Text>
+          <Text className="text-white text-lg font-semibold">Ingresar</Text>
         )}
       </TouchableOpacity>
-      
-      <TouchableOpacity onPress={() => router.replace("./signup")} style={styles.signupButton}>
-        <Text style={styles.signupText}>Registrarme</Text>
+
+      <TouchableOpacity onPress={() => router.push("./signup")} className="flex-row">
+        <Text className="text-base text-gray-500">¿Aún no tienes cuenta?</Text>
+        <Text className="text-base text-primary font-bold ml-1">Crear una ahora</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    color: '#333',
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    backgroundColor: '#fff',
-    fontSize: 16,
-    color: '#333',
-  },
-  button: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#007bff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    marginTop: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  signupButton: {
-    marginTop: 20,
-    padding: 10,
-  },
-  signupText: {
-    color: '#007bff',
-    fontSize: 16,
-    textDecorationLine: 'underline',
-  },
-});

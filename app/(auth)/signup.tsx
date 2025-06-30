@@ -1,8 +1,10 @@
+import Logo from "@/assets/images/logo.svg";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Platform,
   Text,
   TextInput,
@@ -26,6 +28,7 @@ export default function RegisterScreen() {
   const pagerRef = useRef<PagerView>(null);
   const [step, setStep] = useState(0);
   const router = useRouter();
+  const [dotAnimations] = useState([new Animated.Value(1), new Animated.Value(1)]);
 
   const handleChange = (field: string, value: string | Date) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -34,13 +37,36 @@ export default function RegisterScreen() {
   const goToNextStep = () => {
     if (pagerRef.current) {
       pagerRef.current.setPage(step + 1);
-      setStep(step + 1);
     }
   };
 
   const onChangeDate = (_event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) handleChange("birthDate", selectedDate);
+  };
+
+  const onPageSelected = (e: any) => {
+    const newStep = e.nativeEvent.position;
+    setStep(newStep);
+    
+    // Animación para el punto activo
+    Animated.sequence([
+      Animated.timing(dotAnimations[newStep], {
+        toValue: 1.3,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(dotAnimations[newStep], {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    // Resetear la animación del punto anterior
+    if (newStep !== step) {
+      dotAnimations[step].setValue(1);
+    }
   };
 
   const handleRegister = async () => {
@@ -76,40 +102,65 @@ export default function RegisterScreen() {
     }
   };
 
+  const renderProgressDots = () => (
+    <View className="flex-row justify-center my-4">
+      {[0, 1].map((index) => (
+        <Animated.View
+          key={index}
+          style={{
+            transform: [{ scale: dotAnimations[index] }],
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            marginHorizontal: 4,
+            backgroundColor: step === index ? "#f29200" : "#fcd19f",
+          }}
+        />
+      ))}
+    </View>
+  );
+
   return (
     <PagerView
       ref={pagerRef}
       style={{ flex: 1 }}
       initialPage={0}
-      
+      onPageSelected={onPageSelected}
     >
-      {/* datos personales*/}
-      <View key="1" className="flex-1 bg-white justify-center px-6 py-">
-        
-        <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">Comienza ahora</Text>
-        <Text className="text-gray-500 text-center mb-4 text base">
-          Ingresa tus datos personales para personalizar tu experiencia</Text>
+      {/* Paso 1: Datos personales */}
+      <View key="1" className="flex-1 bg-white justify-center px-6 py-8">
+        <View className="items-center mb-6">
+          <Logo width={100} height={100} />
+        </View>
+        <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
+          Comienza ahora
+        </Text>
+        <Text className="text-gray-500 text-center mb-6 text-base">
+          Ingresa tus datos personales
+        </Text>
 
         <TextInput
           placeholder="Nombre"
           value={formData.name}
+           placeholderTextColor="#aaa"
           onChangeText={(text) => handleChange("name", text)}
-          className="mb-4 p-3 bg-white rounded-lg border border-primary"
+          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
         />
 
         <TextInput
           placeholder="Apellido"
           value={formData.lastName}
+           placeholderTextColor="#aaa"
           onChangeText={(text) => handleChange("lastName", text)}
-          className="mb-4 p-3 bg-white rounded-lg border border-primary"
+          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
         />
 
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}
-          className="mb-4 p-3 bg-white rounded-lg border border-primary"
+          className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
         >
-          <Text className="text-gray-500">
-            Fecha de nacimiento
+          <Text className="text-[#333]">
+            {formData.birthDate.toLocaleDateString() || "Fecha de nacimiento"}
           </Text>
         </TouchableOpacity>
 
@@ -123,36 +174,48 @@ export default function RegisterScreen() {
           />
         )}
 
-        <TextInput
-          placeholder="Nombre de usuario"
-          value={formData.username}
-          onChangeText={(text) => handleChange("username", text)}
-          className="mb-4 p-3 bg-white rounded-lg border border-primary"
-        />
+        
 
         <TouchableOpacity
           onPress={goToNextStep}
-          className="bg-primary py-3 rounded-lg"
+          className="w-full bg-primary py-4 rounded-xl"
         >
-          <Text className="text-white text-center font-semibold">
+          <Text className="text-white text-center font-semibold text-base">
             Siguiente
           </Text>
         </TouchableOpacity>
+        
+        {renderProgressDots()}
       </View>
 
-      {/*credenciales*/}
+      {/* Paso 2: Credenciales */}
       <View key="2" className="flex-1 bg-white justify-center px-6 py-8">
-        <Text className="text-3xl font-bold text-center mb-8 text-primary opacity-80">Comienza ahora</Text>
-        <Text className="text-gray-500 text-center mb-4 text base"> Crea tus credenciales para acceder de forma segura</Text>
+        <View className="items-center mb-6">
+          <Logo width={100} height={100} />
+        </View>
+        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
+          Comienza ahora
+        </Text>
+        <Text className="text-gray-500 text-center mb-6 text-base">
+          Crea tus credenciales para acceder de forma segura
+        </Text>
         <TextInput
-          placeholder="Correo"
+          placeholder="Nombre de usuario"
+          value={formData.username}
+           placeholderTextColor="#aaa"
+          onChangeText={(text) => handleChange("username", text)}
+          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
+        />
+
+        <TextInput
+          placeholder="Correo electrónico"
           placeholderTextColor="#aaa"
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
           value={formData.email}
           onChangeText={(text) => handleChange("email", text)}
-          className="mb-4 p-3 bg-white rounded-lg border border-primary"
+          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
         />
 
         <TextInput
@@ -161,17 +224,19 @@ export default function RegisterScreen() {
           secureTextEntry
           value={formData.password}
           onChangeText={(text) => handleChange("password", text)}
-          className="mb-4 p-3 bg-white rounded-lg border border-primary"
+          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
         />
 
         <TouchableOpacity
           onPress={handleRegister}
-          className="bg-primary py-3 rounded-lg"
+          className="w-full bg-primary py-4 rounded-xl"
         >
-          <Text className="text-white text-center font-semibold">
+          <Text className="text-white text-center font-semibold text-base">
             Crear cuenta
           </Text>
         </TouchableOpacity>
+        
+        {renderProgressDots()}
       </View>
     </PagerView>
   );
