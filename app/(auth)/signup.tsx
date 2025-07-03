@@ -28,7 +28,10 @@ export default function RegisterScreen() {
   const pagerRef = useRef<PagerView>(null);
   const [step, setStep] = useState(0);
   const router = useRouter();
-  const [dotAnimations] = useState([new Animated.Value(1), new Animated.Value(1)]);
+  const [dotAnimations] = useState([
+    new Animated.Value(1),
+    new Animated.Value(1),
+  ]);
 
   const handleChange = (field: string, value: string | Date) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -48,7 +51,7 @@ export default function RegisterScreen() {
   const onPageSelected = (e: any) => {
     const newStep = e.nativeEvent.position;
     setStep(newStep);
-    
+
     // Animación para el punto activo
     Animated.sequence([
       Animated.timing(dotAnimations[newStep], {
@@ -62,7 +65,7 @@ export default function RegisterScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-    
+
     // Resetear la animación del punto anterior
     if (newStep !== step) {
       dotAnimations[step].setValue(1);
@@ -71,14 +74,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     try {
-      const {
-        username,
-        name,
-        lastName,
-        birthDate,
-        email,
-        password,
-      } = formData;
+      const { username, name, lastName, birthDate, email, password } = formData;
 
       const formattedDate = birthDate.toISOString().split("T")[0];
 
@@ -126,38 +122,66 @@ export default function RegisterScreen() {
       style={{ flex: 1 }}
       initialPage={0}
       onPageSelected={onPageSelected}
+      accessible={true}
+      accessibilityLabel="Pantallas de registro por pasos"
     >
       {/* Paso 1: Datos personales */}
-      <View key="1" className="flex-1 bg-white justify-center px-6 py-8">
+      <View
+        key="1"
+        className="flex-1 bg-white justify-center px-6 py-8"
+        accessible={true}
+        accessibilityLabel="Paso 1 del registro, datos personales"
+      >
         <View className="items-center mb-6">
-          <Logo width={100} height={100} />
+          <Logo
+            width={100}
+            height={100}
+            accessible={true}
+            accessibilityLabel="Logo de Saludo de la aplicación, es un aguará guazú saludando"
+          />
         </View>
-        <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
+        <Text
+          className="text-3xl font-bold text-center mb-1 text-primary opacity-80"
+          accessibilityRole="header"
+        >
           Comienza ahora
         </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
+        <Text
+          className="text-gray-500 text-center mb-6 text-base"
+          accessibilityLabel="Ingresa tus datos personales"
+        >
           Ingresa tus datos personales
         </Text>
 
         <TextInput
           placeholder="Nombre"
           value={formData.name}
-           placeholderTextColor="#aaa"
+          placeholderTextColor="#aaa"
           onChangeText={(text) => handleChange("name", text)}
           className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+          accessible={true}
+          accessibilityLabel="Campo de texto para ingresar tu nombre"
+          accessibilityHint="Escribe tu nombre"
         />
 
         <TextInput
           placeholder="Apellido"
           value={formData.lastName}
-           placeholderTextColor="#aaa"
+          placeholderTextColor="#aaa"
           onChangeText={(text) => handleChange("lastName", text)}
           className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+          accessible={true}
+          accessibilityLabel="Campo de texto para ingresar tu apellido"
+          accessibilityHint="Escribe tu apellido"
         />
 
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}
           className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
+          accessibilityRole="button"
+          accessibilityLabel="Seleccionar fecha de nacimiento"
+          accessibilityHint="Abre el selector de fecha"
+          accessibilityState={{ selected: !!formData.birthDate }}
         >
           <Text className="text-[#333]">
             {formData.birthDate.toLocaleDateString() || "Fecha de nacimiento"}
@@ -171,40 +195,61 @@ export default function RegisterScreen() {
             display="default"
             maximumDate={new Date()}
             onChange={onChangeDate}
+            accessibilityLabel="Selector de fecha de nacimiento"
           />
         )}
-
-        
 
         <TouchableOpacity
           onPress={goToNextStep}
           className="w-full bg-primary py-4 rounded-xl"
+          accessibilityRole="button"
+          accessibilityLabel="Botón siguiente"
+          accessibilityHint="Avanza al paso siguiente del formulario"
         >
           <Text className="text-white text-center font-semibold text-base">
             Siguiente
           </Text>
         </TouchableOpacity>
-        
+
         {renderProgressDots()}
       </View>
 
       {/* Paso 2: Credenciales */}
-      <View key="2" className="flex-1 bg-white justify-center px-6 py-8">
+      <View
+        key="2"
+        className="flex-1 bg-white justify-center px-6 py-8"
+        accessible={true}
+        accessibilityLabel="Paso dos del registro, credenciales de acceso"
+      >
         <View className="items-center mb-6">
-          <Logo width={100} height={100} />
+          <Logo
+            width={100}
+            height={100}
+            accessible={true}
+            accessibilityLabel="Logo de la aplicación"
+          />
         </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
+        <Text
+          className="text-3xl font-bold text-center mb-2 text-primary opacity-80"
+          accessibilityRole="header"
+        >
           Comienza ahora
         </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
+        <Text
+          className="text-gray-500 text-center mb-6 text-base"
+          accessibilityLabel="Crea tus credenciales para acceder de forma segura"
+        >
           Crea tus credenciales para acceder de forma segura
         </Text>
         <TextInput
           placeholder="Nombre de usuario"
           value={formData.username}
-           placeholderTextColor="#aaa"
+          placeholderTextColor="#aaa"
           onChangeText={(text) => handleChange("username", text)}
           className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
+          accessible={true}
+          accessibilityLabel="Campo de nombre de usuario"
+          accessibilityHint="Elegí un nombre único de usuario"
         />
 
         <TextInput
@@ -216,6 +261,9 @@ export default function RegisterScreen() {
           value={formData.email}
           onChangeText={(text) => handleChange("email", text)}
           className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+          accessible={true}
+          accessibilityLabel="Campo de correo electrónico"
+          accessibilityHint="Ingresá una dirección válida de correo"
         />
 
         <TextInput
@@ -225,17 +273,23 @@ export default function RegisterScreen() {
           value={formData.password}
           onChangeText={(text) => handleChange("password", text)}
           className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
+          accessible={true}
+          accessibilityLabel="Campo de contraseña"
+          accessibilityHint="Creá una contraseña segura"
         />
 
         <TouchableOpacity
           onPress={handleRegister}
           className="w-full bg-primary py-4 rounded-xl"
+          accessibilityRole="button"
+          accessibilityLabel="Botón crear cuenta"
+          accessibilityHint="Completa tu registro con los datos ingresados"
         >
           <Text className="text-white text-center font-semibold text-base">
             Crear cuenta
           </Text>
         </TouchableOpacity>
-        
+
         {renderProgressDots()}
       </View>
     </PagerView>

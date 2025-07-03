@@ -32,7 +32,7 @@ export default function LoginScreen() {
 
       await SecureStorage.setItemAsync("token", res.token);
 
-      const userReq = await fetch("http://192.168.0.20:3402/getUser", {
+      const userReq = await fetch("http://10.254.199.40:3402/getUser", {
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${res.token}`,
@@ -55,12 +55,31 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 justify-center items-center p-6 bg-white">
+    <View
+      className="flex-1 justify-center items-center p-6 bg-white"
+      accessible={true}
+      accessibilityLabel="Pantalla de inicio de sesión"
+    >
+      <Logo
+        width={100}
+        height={100}
+        accessibilityLabel="Logo de la aplicación"
+        accessible={true}
+      />
 
-      <Logo width={150} height={150} />
+      <Text
+        className="text-3xl font-extrabold text-primary mt-4"
+        accessibilityRole="header"
+      >
+        Iniciar sesión
+      </Text>
 
-      <Text className="text-3xl font-extrabold text-primary mt-4">Iniciar sesión</Text>
-      <Text className="text-lg text-gray-500 mb-6">¡Nos alegra verte otra vez!</Text>
+      <Text
+        className="text-lg text-gray-500 mb-6"
+        accessibilityLabel="¡Nos alegra verte otra vez!"
+      >
+        ¡Nos alegra verte otra vez!
+      </Text>
 
       <TextInput
         className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-700 shadow"
@@ -70,6 +89,10 @@ export default function LoginScreen() {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        accessible={true}
+        accessibilityLabel="Campo de correo electrónico"
+        accessibilityHint="Ingresá tu dirección de correo electrónico"
+        accessibilityRole="text"
       />
 
       <TextInput
@@ -79,21 +102,35 @@ export default function LoginScreen() {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        accessible={true}
+        accessibilityLabel="Campo de contraseña"
+        accessibilityHint="Ingresá tu contraseña"
+        accessibilityRole="text"
       />
 
       <TouchableOpacity
         onPress={handleLogin}
         disabled={isSigningIn}
         className="w-full h-14 rounded-xl bg-primary flex justify-center items-center mb-4"
+        accessibilityRole="button"
+        accessibilityLabel="Botón Ingresar"
+        accessibilityHint="Inicia sesión con los datos ingresados"
+        accessibilityState={{ disabled: isSigningIn }}
       >
         {isSigningIn ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="#fff" accessibilityLabel="Iniciando sesión..." />
         ) : (
           <Text className="text-white text-lg font-semibold">Ingresar</Text>
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("./signup")} className="flex-row">
+      <TouchableOpacity
+        onPress={() => router.push("./signup")}
+        className="flex-row"
+        accessibilityRole="link"
+        accessibilityLabel="Crear cuenta"
+        accessibilityHint="Navega a la pantalla para crear una nueva cuenta"
+      >
         <Text className="text-base text-gray-500">¿Aún no tienes cuenta?</Text>
         <Text className="text-base text-primary font-bold ml-1">Crear una ahora</Text>
       </TouchableOpacity>

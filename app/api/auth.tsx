@@ -1,6 +1,6 @@
 export const SignInApi = async (email: string, password: string) => {
     try {
-        const response = await fetch("http://192.168.0.20:3402/login", {
+        const response = await fetch("http://10.254.199.40:3402/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -25,7 +25,7 @@ export const SignUpApi = async (
   password: string
 ) => {
   try {
-    const response = await fetch("http://192.168.0.20:3402/register", {
+    const response = await fetch("http://10.254.199.40:3402/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
