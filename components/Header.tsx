@@ -14,7 +14,7 @@ export default function Header() {
       <TouchableOpacity className="flex-row items-center">
         <Logo width={28} height={28} />
         <Text className="text-white font-bold text-base ml-2">
-          Tinta Nativa
+          Tintas
         </Text>
       </TouchableOpacity>
       <View className="flex-row space-x-4">
