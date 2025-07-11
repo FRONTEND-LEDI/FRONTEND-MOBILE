@@ -19,7 +19,7 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         // Si hay un token, intentar validarlo con el backend
 
-        const res = await fetch("http://10.254.199.174:3402/getUser", {
+        const res = await fetch("http://10.254.199.150:3402/getUser", {
           headers: {
             "Content-Type": "application/json",
             authorization: `Bearer ${token}`,

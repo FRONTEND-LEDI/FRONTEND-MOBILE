@@ -1,6 +1,6 @@
 export const getBooks = async () => {
   try {
-    const response = await fetch("http://10.254.199.174:3402/books", {
+    const response = await fetch("http://10.254.199.150:3402/books", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -22,7 +22,7 @@ export const getBooks = async () => {
 
 export const getBookById = async (id: string) => {
   try {
-    const response = await fetch(`http://10.254.199.174:3402/book/${id}`, {
+    const response = await fetch(`http://10.254.199.150:3402/book/${id}`, {
       method: "GET", 
       headers: {
         "Content-Type": "application/json",

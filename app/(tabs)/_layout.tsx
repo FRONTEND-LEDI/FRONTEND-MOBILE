@@ -11,7 +11,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#D97706",           
           borderTopWidth: 0,                    // elimina la línea superior
-          height: 70,                           
+          height: 80,                           
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -54,6 +54,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+      
     </Tabs>
   );
 }

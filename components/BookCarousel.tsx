@@ -83,7 +83,7 @@ export default function BookCarousel({ data }: BookCarouselProps) {
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => router.push(`/catalogue/${item._id}`)}
+            onPress={() => router.push(`./catalogue/${item._id}`)}
             className="items-center"
             style={{ width: ITEM_WIDTH, marginRight: 8 }}
           >

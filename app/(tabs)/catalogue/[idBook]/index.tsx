@@ -16,8 +16,8 @@ export default function BookProps() {
     id: string;
     title: string;
     author: string;
-    coverImage: {
-      url_segura: string;
+    bookCoverImage: {
+      url_secura: string;
     };
     synopsis: string;
     description?: string;
@@ -80,7 +80,7 @@ export default function BookProps() {
         {/* Portada */}
         <View className="items-center mt-4 mb-2">
           <Image
-            source={{ uri: book.coverImage?.url_segura }}
+            source={{ uri: book.bookCoverImage.url_secura }}
             style={{
               width: width * 0.4,
               height: width * 0.6,
@@ -110,16 +110,16 @@ export default function BookProps() {
         </View>
 
         {/* Sobre el libro */}
-        <Text className="text-base font-semibold mb-2 text-center">
+        <Text className="text-base font-semibold m-2 text-center">
           Sobre {book.title}
         </Text>
         <Text className="text-gray-700 mb-4 text-center">
           {book.synopsis || "Sin descripción disponible."}
         </Text>
 
-        {/* Info extra */}
-       
-        <View className="flex-row justify-around mb-6">
+        
+
+        <View className="flex-row justify-around m-7">
           <View className="items-center">
             <Text className="font-medium">{book.genre}</Text>
             <Text className="text-sm text-gray-500">Tipo de obra</Text>
@@ -128,17 +128,20 @@ export default function BookProps() {
             <Text className="font-medium">{book.yearBook?.split("-")[0]}</Text>
             <Text className="text-sm text-gray-500">Año</Text>
           </View>
-          
         </View>
-        <View className="flex-row justify-center items-center">
-            {book.theme && book.theme.length > 0 && (
-              <View className="flex-row flex-wrap justify-center gap-2 mb-4">
-                {book.theme.map((item, index) => (
-                  <ButtonTheme key={index} data={{ text: item }} />
-                ))}
-              </View>
-            )}
-          </View>
+      
+        <View className="flex-row justify-center items-center m-7">
+          {book.theme && book.theme.length > 0 && (
+            <View className="flex-row flex-wrap justify-center gap-2 mb-4">
+              {book.theme.slice(0, 3).map((item, index) => (
+                <ButtonTheme key={index} data={{ text: item }} />
+              ))}
+            </View>
+          )}
+        </View>
+        
+      
+        
       </ScrollView>
     </View>
   );
