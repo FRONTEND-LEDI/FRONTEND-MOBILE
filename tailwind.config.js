@@ -6,18 +6,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#F29200",
-        secondary: "#F8D49A",
-        tertiary: "#A7C257",
-        white: "#FFFFFF",
-        black: "#000000",
+        primary: "#f29200",
+        secondary: "#f8d49a",
+        tertiary: "#a7c257",
+        dark: "#131313",
+        light: "#fffbf0",
       },
     },
   },
-  plugins: [
-   
-  ],
-}
+  plugins: [],
+};
 
 // main
 // dev-tati

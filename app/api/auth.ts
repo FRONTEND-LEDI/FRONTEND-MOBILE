@@ -12,7 +12,7 @@ export const SignInApi = async (email: string, password: string) => {
         console.log("data",data)
         return data;
     } catch (error) {
-        throw error;
+        return { error: "Error de conexión" + error };
     }
 }
 
