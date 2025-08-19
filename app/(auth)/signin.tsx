@@ -1,4 +1,5 @@
 import Logo from "@/assets/images/logosaludo.svg";
+import { URI } from "@/constants/ip";
 import { useRouter } from "expo-router";
 import * as SecureStorage from "expo-secure-store";
 import { useContext, useState } from "react";
@@ -17,15 +18,13 @@ import {
 } from "react-native";
 import { SignInApi } from "../api/auth";
 import { authContext } from "../context/authContext";
-
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const { setIsLogin } = useContext(authContext);
   const router = useRouter();
-
-  const handleLogin = async () => {
+const handleLogin = async () => {
     setIsSigningIn(true);
     try {
       const res = await SignInApi(email, password);
@@ -37,10 +36,10 @@ export default function LoginScreen() {
 
       await SecureStorage.setItemAsync("token", res.token);
 
-      const userReq = await fetch("http://10.254.199.150:3402/getUser", {
+      const userReq = await fetch(`http://${URI}/getUser`, {
         headers: {
           "Content-Type": "application/json",
-          authorization: `Bearer ${res.token}`,
+          "authorization": `Bearer ${res.token}`,
         },
       });
 

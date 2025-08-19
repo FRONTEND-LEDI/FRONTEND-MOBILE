@@ -1,11 +1,11 @@
-// app/_layout.tsx
 import ProviderContext from '@/app/context/providerContext';
 import '@/global.css';
 import { useFonts } from 'expo-font';
 import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
-
+import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -30,8 +30,11 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <ProviderContext>
-      <Slot/>
-    </ProviderContext>
+    <SafeAreaProvider>
+      <ProviderContext>
+        <StatusBar barStyle="dark-content" />
+        <Slot />
+      </ProviderContext>
+    </SafeAreaProvider>
   );
 }

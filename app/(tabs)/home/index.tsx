@@ -1,12 +1,13 @@
 import { getBooks } from "@/app/api/catalogue";
 import { authContext } from "@/app/context/authContext";
-import Banner from "@/assets/images/banner.jpg";
+import Banner from "@/assets/images/biblioteca.png";
 import BookCarousel from "@/components/BookCarousel";
 import Header from "@/components/Header";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useContext, useEffect, useState } from "react";
 import { Button, Image, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function Home() {
   const router = useRouter();
   const { logout, isLogin } = useContext(authContext);
@@ -41,7 +42,7 @@ export default function Home() {
   
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <Header />
       <View className="p-4">
         <Image className='w-full h-40 rounded-lg' source={Banner}></Image>
@@ -54,6 +55,7 @@ export default function Home() {
       <View className="px-4">
         <Button title="Cerrar sesión" onPress={logout} />
       </View> 
-    </View>
+    
+    </SafeAreaView>
   );
 }

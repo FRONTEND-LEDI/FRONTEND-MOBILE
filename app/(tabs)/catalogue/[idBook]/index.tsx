@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function BookProps() {
   type Book = {
     id: string;
@@ -24,6 +25,9 @@ export default function BookProps() {
     genre?: string;
     yearBook?: string;
     theme?: string[];
+    contentBook: {
+      url_secura: string;
+    }
   };
   const router = useRouter();
   const { idBook } = useLocalSearchParams();
@@ -68,7 +72,7 @@ export default function BookProps() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -101,7 +105,10 @@ export default function BookProps() {
 
         {/* Botones */}
         <View className="flex-row justify-center gap-4 mb-4">
-          <TouchableOpacity className="bg-primary px-6 py-2 rounded-full">
+          <TouchableOpacity className="bg-primary px-6 py-2 rounded-full" onPress={() => router.push({
+            pathname: `./${idBook}/read`,
+            params: { pdfUrl: book.contentBook.url_secura },
+          })}>
             <Text className="text-white font-semibold">Leer</Text>
           </TouchableOpacity>
           <TouchableOpacity className="bg-primary px-6 py-2 rounded-full">
@@ -143,6 +150,6 @@ export default function BookProps() {
       
         
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

@@ -3,14 +3,16 @@ import Header from "@/components/Header";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import BookCard from "./components/BookCard";
-import GenreFilter from "./components/ButtonFilter";
+import ButtonFilter from "./components/ButtonFilter";
 
 export default function Products() {
+  const genres = ["Acción", "Comedia", "Drama", "Terror"];
+  const material = ["Audilibro", "Antología", "Recursos"]
   const router = useRouter();
   const [books, setBooks] = useState<any[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<any[]>([]);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -25,24 +27,30 @@ export default function Products() {
     getData();
   }, []);
 
-  useEffect(() => {
-    if (!selectedGenre) {
-      setFilteredBooks(books);
-    } else {
-      const filtered = books.filter((book) =>
-        book.theme?.includes(selectedGenre)
-      );
-      setFilteredBooks(filtered);
-    }
-  }, [selectedGenre, books]);
-
   return (
-    <>
+    <SafeAreaView className="flex-1">
       <Header />
-      <View className="bg-white p-6 flex-1">
-        <GenreFilter onSelect={setSelectedGenre} />
+      <View className="p-6">
+        <View className="flex flex-row ">
+           <ButtonFilter
+        
+          items={genres}
+          placeholder="Géneros"
+          title="Seleccionar género"
+          onSelect={(genre:any) => console.log("Género seleccionado:", genre)}
+          
+        />
+        <ButtonFilter
+          items={material}
+          placeholder="Obras"
+          title="Seleccionar tipo de obra"
+          onSelect={(genre:any) => console.log("Tipo de obra seleccionado:", genre)}
+        />
+        </View>
         {filteredBooks.length === 0 ? (
-          <Text className="mt-4 text-center">No hay libros para este género</Text>
+          <Text className="mt-4 text-center">
+            No hay libros para este género
+          </Text>
         ) : (
           <FlatList
             data={filteredBooks}
@@ -60,6 +68,6 @@ export default function Products() {
           />
         )}
       </View>
-    </>
+    </SafeAreaView>
   );
 }

@@ -1,22 +1,36 @@
 import { useState } from "react";
 import {
-    FlatList,
-    Modal,
-    Pressable,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Modal,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-const genres = ["Accion", "Comedia", "Drama", "Terror"];
+interface FilterProps<T> {
+  items: T[];
+  placeholder?: string;
+  title?: string;
+  buttonStyle?: string;
+  modalStyle?: string;
+  onSelect: (item: T | null) => void;
+}
 
-export default function GenreFilter({ onSelect }: { onSelect: (genre: string | null) => void }) {
+export default function ButtonFilter<T>({
+  items,
+  placeholder = "Seleccionar",
+  title = "Seleccionar",
+  buttonStyle = "",
+  modalStyle = "",
+  onSelect,
+}: FilterProps<T>) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<T | null>(null);
 
-  const handleSelect = (genre: string | null) => {
-    setSelectedGenre(genre);
-    onSelect(genre);
+  const handleSelect = (item: T | null) => {
+    setSelectedItem(item);
+    onSelect(item);
     setModalVisible(false);
   };
 
@@ -24,34 +38,33 @@ export default function GenreFilter({ onSelect }: { onSelect: (genre: string | n
     <>
       <Pressable
         onPress={() => setModalVisible(true)}
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          backgroundColor: "#fff",
-          borderRadius: 999,
-          alignSelf: "flex-start",
-          flexDirection: "row",
-          alignItems: "center",
-          borderColor: "#D97706",
-        }}
+        className={`px-4 py-2 bg-secondary text-white rounded-full self-start flex-row items-center ${buttonStyle}`}
       >
-        <Text style={{ fontSize: 16 }}>{selectedGenre || "Genres"}</Text>
-        <Text style={{ marginLeft: 4, fontSize: 16 }}>▼</Text>
+        <Text className="text-semibold  text-white">
+          {selectedItem ? String(selectedItem) : placeholder}
+        </Text>
       </Pressable>
 
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View className="flex-1 justify-end bg-black/30">
-          <View className="bg-white p-4 rounded-t-2xl max-h-[50%]">
-            <Text className="text-lg font-semibold mb-2">Seleccionar género</Text>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View className={`flex-1 justify-end bg-black/30 ${modalStyle}`}>
+          <View className="bg-white p-4 rounded-t-[20px] max-h-[50%]">
+            <Text className="text-lg font-semibold mb-3">{title}</Text>
             <FlatList
-              data={["Todos", ...genres]}
-              keyExtractor={(item) => item}
+              data={["Todos", ...items] as any[]}
+              keyExtractor={(item) => String(item)}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => handleSelect(item === "Todos" ? null : item)}
                   className="p-3 border-b border-gray-200"
                 >
-                  <Text className="text-base">{item}</Text>
+                  <Text className="text-base">
+                    {item === "Todos" ? "Todos" : String(item)}
+                  </Text>
                 </TouchableOpacity>
               )}
             />

@@ -1,11 +1,10 @@
+import { URI } from '@/constants/ip';
 import * as SecureStore from "expo-secure-store";
 import React, { ReactNode, useEffect, useState } from "react";
 import { authContext } from "./authContext";
-
 const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLogin, setIsLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Empieza en true, ya que está cargando el estado de autenticación
-
   useEffect(() => {
     const getData = async () => {
       try {
@@ -19,10 +18,10 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         // Si hay un token, intentar validarlo con el backend
 
-        const res = await fetch("http://10.254.199.150:3402/getUser", {
+        const res = await fetch(`http:/${URI}/getUser`, {
           headers: {
             "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
+            "authorization": `Bearer ${token}`,
           },
         });
 

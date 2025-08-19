@@ -1,6 +1,8 @@
+import { URI } from "@/constants/ip";
+
 export const SignInApi = async (email: string, password: string) => {
     try {
-        const response = await fetch("http://10.254.199.150:3402/login", {
+        const response = await fetch(`http://${URI}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -25,7 +27,7 @@ export const SignUpApi = async (
   password: string
 ) => {
   try {
-    const response = await fetch("http://10.254.199.150:3402/register", {
+    const response = await fetch(`http://${URI}/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
