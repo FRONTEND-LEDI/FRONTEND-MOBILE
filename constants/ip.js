@@ -1,1 +1,1 @@
-export const URI = "10.254.197.248:3402"; 
+export const URI = "10.254.199.99:3402"; 

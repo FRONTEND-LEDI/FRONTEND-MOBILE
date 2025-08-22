@@ -85,70 +85,35 @@ export const getBySearch = async (query: string) => {
   }
 };
 
-export const getBoookByFiltering = async (genre:string, subgenre:string, yearBook:string) => {
+export const  getBooksByFiltering = async (filters: {
+  theme?: string[];
+  subgenre?: string[];
+  yearBook?: Date[];
+  format?:string[];
+  genre?:string[]
+})=> {
   try {
-    const response = await fetch(`http://${URI}/bookByFiltering`,{
+    const token = await SecureStore.getItemAsync("token");
+    
 
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
+    if (!token) {
+      throw new Error("No se encontró el token. Inicia sesión nuevamente.");
     }
-    })
+    const response = await fetch(`http://${URI}/booksByFiltering`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(filters),
+    });
 
-    const data = response.json()
-    console.log(data)
-    if (!response.ok) {
-      throw new Error(`Error del servidor: ${response.status}`);
-    }
+    if (!response.ok) throw new Error("Error en la petición");
 
-    return data
+    return await response.json();
   } catch (error) {
-     console.error("Error en getBySearch:", error);
-    throw error;
+    console.error("Error en getBooksByFiltering:", error);
+    return [];
   }
 }
-export const getSubgenres = async (genre:string, subgenre:string, yearBook:string) => {
-  try {
-    const response = await fetch(`http://${URI}/booksSubgenres`,{
 
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json"
-    }
-    })
-
-    const data = response.json()
-    console.log(data)
-    if (!response.ok) {
-      throw new Error(`Error del servidor: ${response.status}`);
-    }
-
-    return data
-  } catch (error) {
-     console.error("Error en getBySearch:", error);
-    throw error;
-  }
-}
-export const getGenres = async (genre:string, subgenre:string, yearBook:string) => {
-  try {
-    const response = await fetch(`http://${URI}/booksGenres`,{
-
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json"
-    }
-    })
-
-    const data = response.json()
-   
-    if (!response.ok) {
-      throw new Error(`Error del servidor: ${response.status}`);
-    }
-
-    return data
-  } catch (error) {
-     console.error("Error en getBySearch:", error);
-    throw error;
-  }
-}
 

@@ -1,3 +1,5 @@
+// ButtonFilter.tsx
+import { MaterialIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   FlatList,
@@ -38,35 +40,53 @@ export default function ButtonFilter<T>({
     <>
       <Pressable
         onPress={() => setModalVisible(true)}
-        className={`px-4 py-2 bg-secondary text-white rounded-full self-start flex-row items-center ${buttonStyle}`}
+        android_ripple={{ color: "#ddd", borderless: true }}
+        className={` px-3 py-2 bg-secondary rounded-full flex-row items-center justify-between shadow-sm ${buttonStyle}`}
       >
-        <Text className="text-semibold  text-white">
+        <Text className="text-white font-medium text-center">
           {selectedItem ? String(selectedItem) : placeholder}
         </Text>
+        <MaterialIcons name="arrow-drop-down" size={20} color="white" />
       </Pressable>
 
       <Modal
         visible={modalVisible}
         animationType="slide"
-        transparent={true}
+        transparent
         onRequestClose={() => setModalVisible(false)}
       >
         <View className={`flex-1 justify-end bg-black/30 ${modalStyle}`}>
-          <View className="bg-white p-4 rounded-t-[20px] max-h-[50%]">
+          <View className="bg-white p-4 rounded-t-2xl max-h-[50%]">
+            {/* Handle visual */}
+            <View className="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-3" />
+
             <Text className="text-lg font-semibold mb-3">{title}</Text>
+
             <FlatList
               data={["Todos", ...items] as any[]}
               keyExtractor={(item) => String(item)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => handleSelect(item === "Todos" ? null : item)}
-                  className="p-3 border-b border-gray-200"
-                >
-                  <Text className="text-base">
-                    {item === "Todos" ? "Todos" : String(item)}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              renderItem={({ item }) => {
+                const isSelected =
+                  (item === "Todos" && selectedItem === null) ||
+                  item === selectedItem;
+                return (
+                  <TouchableOpacity
+                    onPress={() => handleSelect(item === "Todos" ? null : item)}
+                    className={`p-3 rounded-lg ${
+                      isSelected ? "bg-gray-100" : ""
+                    }`}
+                  >
+                    <Text
+                      className={`text-base ${
+                        isSelected ? "font-semibold text-secondary" : ""
+                      }`}
+                    >
+                      {item === "Todos" ? "Todos" : String(item)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+              ItemSeparatorComponent={() => <View className="h-2" />}
             />
           </View>
         </View>
