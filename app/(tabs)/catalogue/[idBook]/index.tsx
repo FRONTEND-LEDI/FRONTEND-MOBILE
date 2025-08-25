@@ -97,8 +97,8 @@ export default function BookProps() {
         <Text className="text-center font-semibold text-lg">{book.title}</Text>
         <View className="flex-row justify-center items-center mt-1 mb-3">
           <Image
-            source={require("@/assets/images/avatar.webp")}
-            className="w-6 h-6 rounded-full mr-2"
+            source={require("@/assets/images/avatar-con-anteojos.png")}
+            className="w-6 h-6 rounded-full mr-2 border-[1px] border-secondary"
           />
           <Text className="text-sm text-gray-700">{book.author}</Text>
         </View>

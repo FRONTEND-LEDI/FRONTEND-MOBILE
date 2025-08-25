@@ -1,15 +1,16 @@
-import Logo from "@/assets/images/logo.svg";
+import Logo from "@/assets/images/avatar-con-anteojos.png";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Image,
   Platform,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import PagerView from "react-native-pager-view";
 import { SignUpApi } from "../api/auth";
@@ -133,9 +134,9 @@ export default function RegisterScreen() {
         accessibilityLabel="Paso 1 del registro, datos personales"
       >
         <View className="items-center mb-6">
-          <Logo
-            width={100}
-            height={100}
+          <Image
+            source={Logo}
+            className="w-32 h-32 rounded-full border-2 border-primary"
             accessible={true}
             accessibilityLabel="Logo de Saludo de la aplicación, es un aguará guazú saludando"
           />
@@ -222,9 +223,9 @@ export default function RegisterScreen() {
         accessibilityLabel="Paso dos del registro, credenciales de acceso"
       >
         <View className="items-center mb-6">
-          <Logo
-            width={100}
-            height={100}
+          <Image
+            source={Logo}
+            className="h-32 w-32 rounded-full border-2 border-primary"
             accessible={true}
             accessibilityLabel="Logo de la aplicación"
           />

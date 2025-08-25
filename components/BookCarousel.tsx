@@ -93,8 +93,8 @@ export default function BookCarousel({ data }: BookCarouselProps) {
                   item.bookCoverImage.url_secura ||
                   "https://imgs.search.brave.com/CLocZ60Ulym7ZdP1n0bu-UWYnllARxnUNFHLCXNhAsQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90aHVt/YnMuZHJlYW1zdGlt/ZS5jb20vYi9mb25k/by1hbWFyaWxsby15/LWFuYXJhbmphZG8t/ZGUtbGEtdGV4dHVy/YS00MTUwMDkxMS5q/cGc",
               }}
-              className="rounded-lg"
-              style={{ width: ITEM_WIDTH - 20, height: 180 }}
+              className="rounded-md"
+              style={{ width: ITEM_WIDTH - 10, height: 180 }}
               resizeMode="cover"
             />
           </TouchableOpacity>
