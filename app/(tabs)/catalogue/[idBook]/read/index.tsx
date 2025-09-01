@@ -1,7 +1,7 @@
+
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
 export default function ReadBook() {
@@ -22,12 +22,13 @@ export default function ReadBook() {
   )}&embedded=true`;
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      
+    // <SafeAreaView className="flex-1 bg-white">
+     
       <WebView
         source={{ uri: googleDocsUrl }}
         style={{ flex: 1, 
           width: "100%",
+          height: "100%"
          }}
         javaScriptEnabled
         domStorageEnabled
@@ -39,7 +40,7 @@ export default function ReadBook() {
         )}
       />
     
-    </SafeAreaView>
+    // </SafeAreaView>
   );
 }
 

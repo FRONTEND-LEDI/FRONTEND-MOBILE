@@ -16,7 +16,10 @@ export default function BookProps() {
   type Book = {
     id: string;
     title: string;
-    author: string;
+    author:[ {
+    _id: string;
+    name: string;
+    }]
     bookCoverImage: {
       url_secura: string;
     };
@@ -100,7 +103,9 @@ export default function BookProps() {
             source={require("@/assets/images/avatar-con-anteojos.png")}
             className="w-6 h-6 rounded-full mr-2 border-[1px] border-secondary"
           />
-          <Text className="text-sm text-gray-700">{book.author}</Text>
+          {/* <Text className="text-sm text-gray-700">{book.author[0].name}</Text> */}
+          <TouchableOpacity onPress={() => router.push(`./${idBook}/author/${book.author[0]._id}`)}><Text className="text-sm text-gray-700">{book.author[0].name}</Text></TouchableOpacity>
+         
         </View>
 
         {/* Botones */}
