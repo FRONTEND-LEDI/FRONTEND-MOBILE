@@ -15,19 +15,15 @@ export default function Products() {
   const [filteredBooks, setFilteredBooks] = useState<any[]>([]);
   const [subgenres, setSubgenres] = useState<string[]>([]);
   const [formats, setFormats] = useState<string[]>([]);
-  const [yearBook, setYearbook] = useState<string[]>([]);
-  const [filters, setFilters] = useState<{
-    genre?: string[] | null;
-    subgenre?: string[] | null;
-    format?: string[] | null;
-    yearBook?: string[] | null;
-    theme?: string[] | null;
-  }>({
-    genre: null,
-    subgenre: null,
-    format: null,
-    yearBook: null,
-    theme: null,
+  const [yearBook, setYearBook] = useState<string[]>([]);
+
+  // Inicialización de filtros con arrays vacíos
+  const [filters, setFilters] = useState({
+    genre: [],
+    subgenre: [],
+    format: [],
+    yearBook: [],
+    theme: [],
   });
 
   // Obtener Subgéneros
@@ -61,7 +57,7 @@ export default function Products() {
     const getData = async () => {
       try {
         const response = await getYears();
-        setYearbook(response);
+        setYearBook(response);
       } catch (error) {
         console.log("Error al obtener años:", error);
       }
@@ -86,13 +82,7 @@ export default function Products() {
   // Aplicar Filtros
   const applyFilters = async () => {
     try {
-      const response = await getBooksByFiltering({
-        genre: filters.genre ?? [],
-        theme: filters.theme ?? [],
-        subgenre: filters.subgenre ?? [],
-        format: filters.format ?? [],
-        yearBook: filters.yearBook?.map((year) => new Date(year)) ?? [],
-      });
+      const response = await getBooksByFiltering(filters);
       setFilteredBooks(response);
     } catch (error) {
       console.error("Error al aplicar filtros:", error);
