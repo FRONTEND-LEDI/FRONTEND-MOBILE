@@ -3,8 +3,8 @@ import { getAuthorById } from "@/app/api/author";
 import { getBookById } from "@/app/api/catalogue";
 import { AuthorType } from "@/types/author";
 import { BookType } from "@/types/book";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -28,7 +28,8 @@ export default function BookProps() {
 
   // ! Traer los libros
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
+    console.log('book', idBook)
     const fetchBook = async () => {
       try {
         const data = await getBookById(idBook as string);
@@ -41,8 +42,7 @@ export default function BookProps() {
       }
     };
     fetchBook();
-  }, [idBook]);
-
+  }, [idBook]));
   // ! Traer el autor 
   useEffect(() => {
     const getAuthor = async () => {
@@ -61,6 +61,14 @@ export default function BookProps() {
       getAuthor();
     }
   }, [book]);
+
+  useEffect(() => {
+    return () => {
+      setBook(null);
+      setLoading(true);
+      setError(null);
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -154,21 +162,21 @@ export default function BookProps() {
 
         {/* Detalles del libro */}
         <View className="mb-6">
-          <Text className="text-lg font-bold text-gray-800 mb-3 text-center">
+          {/* <Text className="text-lg font-bold text-gray-800 mb-3 text-center">
             Detalles del libro
-          </Text>
-          <View className="flex-row justify-evenly mx-10">
-            <View>
-              <Text className="text-gray-600 font-semibold">Género</Text>
-              <Text className="text-gray-800 text-base ">
+          </Text> */}
+          <View className="flex-row justify-evenly my-9">
+            <View className="mx-8">
+              <Text className="text-gray-800 font-semibold">
                 {book.genre || "Desconocido"}
               </Text>
+              <Text className="text-gray-600 font-normal">Género</Text>
             </View>
-            <View>
-              <Text className="text-gray-600 font-semibold">Año</Text>
-              <Text className="text-gray-800 text-base">
+            <View className="mx-8">
+              <Text className="text-gray-800 font-semibold">
                 {book.yearBook?.split("-")[0] || "Desconocido"}
               </Text>
+              <Text className="text-gray-600 font-normal">Año</Text>
             </View>
           </View>
         </View>
@@ -180,7 +188,7 @@ export default function BookProps() {
               Temas principales
             </Text>
             <View className="flex-row flex-wrap justify-center gap-2">
-              {book.theme.slice(0, 3).map((item, index) => (
+              {book.theme.slice(0, 4).map((item, index) => (
                 <ButtonTheme key={index} data={{ text: item }} />
               ))}
             </View>

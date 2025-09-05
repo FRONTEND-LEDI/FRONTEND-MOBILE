@@ -27,6 +27,7 @@ export default function Products() {
   });
 
   // Obtener Subgéneros
+
   useEffect(() => {
     const getData = async () => {
       try {
@@ -58,6 +59,7 @@ export default function Products() {
       try {
         const response = await getYears();
         setYearBook(response);
+       
       } catch (error) {
         console.log("Error al obtener años:", error);
       }
@@ -79,15 +81,29 @@ export default function Products() {
     getData();
   }, []);
 
-  // Aplicar Filtros
-  const applyFilters = async () => {
+   useEffect(() => {
+     const applyFilters = async () => {
     try {
       const response = await getBooksByFiltering(filters);
       setFilteredBooks(response);
+
+      
     } catch (error) {
       console.error("Error al aplicar filtros:", error);
     }
   };
+  applyFilters();
+  }, [filters]);
+
+  // Aplicar Filtros
+  // const applyFilters = async () => {
+  //   try {
+  //     const response = await getBooksByFiltering(filters);
+  //     setFilteredBooks(response);
+  //   } catch (error) {
+  //     console.error("Error al aplicar filtros:", error);
+  //   }
+  // };
 
   // Actualizar Filtros
   const handleFilterChange = (key: string, value: string | null) => {
@@ -96,10 +112,21 @@ export default function Products() {
       [key]: value ? [value] : [],
     }));
   };
+//   const handleFilterChange = (key: string, value: string | null) => {
+//   setFilters((prev) => ({
+//     ...prev,
+//     [key]: value 
+//       ? key === "yearBook" 
+//         ? [new Date(`${value}-01-01`).toISOString()] 
+//         : [value] 
+//       : [],
+//   }));
+// };
 
-  useEffect(() => {
-    applyFilters();
-  }, [filters]);
+ 
+
+    
+
 
   return (
     <SafeAreaView className="flex-1">
@@ -130,7 +157,9 @@ export default function Products() {
         {/* Catálogo */}
         {filteredBooks.length === 0 ? (
           <Text className="mt-10 text-center text-gray-500 italic">
-            No hay libros para los filtros seleccionados
+            
+           
+            No se encontraron libros con los filtros seleccionados
           </Text>
         ) : (
           <FlatList

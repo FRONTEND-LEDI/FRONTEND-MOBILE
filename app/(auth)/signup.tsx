@@ -6,11 +6,13 @@ import {
   Alert,
   Animated,
   Image,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import PagerView from "react-native-pager-view";
 import { SignUpApi } from "../api/auth";
@@ -53,7 +55,6 @@ export default function RegisterScreen() {
     const newStep = e.nativeEvent.position;
     setStep(newStep);
 
-    // Animación para el punto activo
     Animated.sequence([
       Animated.timing(dotAnimations[newStep], {
         toValue: 1.3,
@@ -67,7 +68,6 @@ export default function RegisterScreen() {
       }),
     ]).start();
 
-    // Resetear la animación del punto anterior
     if (newStep !== step) {
       dotAnimations[step].setValue(1);
     }
@@ -76,7 +76,6 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     try {
       const { username, name, lastName, birthDate, email, password } = formData;
-
       const formattedDate = birthDate.toISOString().split("T")[0];
 
       const res = await SignUpApi(
@@ -118,181 +117,148 @@ export default function RegisterScreen() {
   );
 
   return (
-    <PagerView
-      ref={pagerRef}
+    <KeyboardAvoidingView
       style={{ flex: 1 }}
-      initialPage={0}
-      onPageSelected={onPageSelected}
-      accessible={true}
-      accessibilityLabel="Pantallas de registro por pasos"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Paso 1: Datos personales */}
-      <View
-        key="1"
-        className="flex-1 bg-white justify-center px-6 py-8"
+      <PagerView
+        ref={pagerRef}
+        style={{ flex: 1 }}
+        initialPage={0}
+        onPageSelected={onPageSelected}
         accessible={true}
-        accessibilityLabel="Paso 1 del registro, datos personales"
+        accessibilityLabel="Pantallas de registro por pasos"
       >
-        <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary"
-            accessible={true}
-            accessibilityLabel="Logo de Saludo de la aplicación, es un aguará guazú saludando"
-          />
-        </View>
-        <Text
-          className="text-3xl font-bold text-center mb-1 text-primary opacity-80"
-          accessibilityRole="header"
+        {/* Paso 1: Datos personales */}
+        <ScrollView
+          key="1"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          keyboardShouldPersistTaps="handled"
         >
-          Comienza ahora
-        </Text>
-        <Text
-          className="text-gray-500 text-center mb-6 text-base"
-          accessibilityLabel="Ingresa tus datos personales"
+          <View className="flex-1 bg-white justify-center px-6 py-8">
+            <View className="items-center mb-6">
+              <Image
+                source={Logo}
+                className="w-32 h-32 rounded-full border-2 border-primary"
+              />
+            </View>
+            <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
+              Comienza ahora
+            </Text>
+            <Text className="text-gray-500 text-center mb-6 text-base">
+              Ingresa tus datos personales
+            </Text>
+
+            <TextInput
+              placeholder="Nombre"
+              value={formData.name}
+              placeholderTextColor="#aaa"
+              onChangeText={(text) => handleChange("name", text)}
+              className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+            />
+
+            <TextInput
+              placeholder="Apellido"
+              value={formData.lastName}
+              placeholderTextColor="#aaa"
+              onChangeText={(text) => handleChange("lastName", text)}
+              className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+            />
+
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
+            >
+              <Text className="text-[#333]">
+                {formData.birthDate.toLocaleDateString() ||
+                  "Fecha de nacimiento"}
+              </Text>
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={formData.birthDate}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={onChangeDate}
+              />
+            )}
+
+            <TouchableOpacity
+              onPress={goToNextStep}
+              className="w-full bg-primary py-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-semibold text-base">
+                Siguiente
+              </Text>
+            </TouchableOpacity>
+
+            {renderProgressDots()}
+          </View>
+        </ScrollView>
+
+        {/* Paso 2: Credenciales */}
+        <ScrollView
+          key="2"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          keyboardShouldPersistTaps="handled"
         >
-          Ingresa tus datos personales
-        </Text>
+          <View className="flex-1 bg-white justify-center px-6 py-8">
+            <View className="items-center mb-6">
+              <Image
+                source={Logo}
+                className="h-32 w-32 rounded-full border-2 border-primary"
+              />
+            </View>
+            <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
+              Comienza ahora
+            </Text>
+            <Text className="text-gray-500 text-center mb-6 text-base">
+              Crea tus credenciales para acceder de forma segura
+            </Text>
 
-        <TextInput
-          placeholder="Nombre"
-          value={formData.name}
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange("name", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
-          accessible={true}
-          accessibilityLabel="Campo de texto para ingresar tu nombre"
-          accessibilityHint="Escribe tu nombre"
-        />
+            <TextInput
+              placeholder="Nombre de usuario"
+              value={formData.username}
+              placeholderTextColor="#aaa"
+              onChangeText={(text) => handleChange("username", text)}
+              className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
+            />
 
-        <TextInput
-          placeholder="Apellido"
-          value={formData.lastName}
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange("lastName", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
-          accessible={true}
-          accessibilityLabel="Campo de texto para ingresar tu apellido"
-          accessibilityHint="Escribe tu apellido"
-        />
+            <TextInput
+              placeholder="Correo electrónico"
+              placeholderTextColor="#aaa"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={formData.email}
+              onChangeText={(text) => handleChange("email", text)}
+              className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+            />
 
-        <TouchableOpacity
-          onPress={() => setShowDatePicker(true)}
-          className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
-          accessibilityRole="button"
-          accessibilityLabel="Seleccionar fecha de nacimiento"
-          accessibilityHint="Abre el selector de fecha"
-          accessibilityState={{ selected: !!formData.birthDate }}
-        >
-          <Text className="text-[#333]">
-            {formData.birthDate.toLocaleDateString() || "Fecha de nacimiento"}
-          </Text>
-        </TouchableOpacity>
+            <TextInput
+              placeholder="Contraseña"
+              placeholderTextColor="#aaa"
+              secureTextEntry
+              value={formData.password}
+              onChangeText={(text) => handleChange("password", text)}
+              className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
+            />
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={formData.birthDate}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={onChangeDate}
-            accessibilityLabel="Selector de fecha de nacimiento"
-          />
-        )}
+            <TouchableOpacity
+              onPress={handleRegister}
+              className="w-full bg-primary py-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-semibold text-base">
+                Crear cuenta
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={goToNextStep}
-          className="w-full bg-primary py-4 rounded-xl"
-          accessibilityRole="button"
-          accessibilityLabel="Botón siguiente"
-          accessibilityHint="Avanza al paso siguiente del formulario"
-        >
-          <Text className="text-white text-center font-semibold text-base">
-            Siguiente
-          </Text>
-        </TouchableOpacity>
-
-        {renderProgressDots()}
-      </View>
-
-      {/* Paso 2: Credenciales */}
-      <View
-        key="2"
-        className="flex-1 bg-white justify-center px-6 py-8"
-        accessible={true}
-        accessibilityLabel="Paso dos del registro, credenciales de acceso"
-      >
-        <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="h-32 w-32 rounded-full border-2 border-primary"
-            accessible={true}
-            accessibilityLabel="Logo de la aplicación"
-          />
-        </View>
-        <Text
-          className="text-3xl font-bold text-center mb-2 text-primary opacity-80"
-          accessibilityRole="header"
-        >
-          Comienza ahora
-        </Text>
-        <Text
-          className="text-gray-500 text-center mb-6 text-base"
-          accessibilityLabel="Crea tus credenciales para acceder de forma segura"
-        >
-          Crea tus credenciales para acceder de forma segura
-        </Text>
-        <TextInput
-          placeholder="Nombre de usuario"
-          value={formData.username}
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange("username", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
-          accessible={true}
-          accessibilityLabel="Campo de nombre de usuario"
-          accessibilityHint="Elegí un nombre único de usuario"
-        />
-
-        <TextInput
-          placeholder="Correo electrónico"
-          placeholderTextColor="#aaa"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          value={formData.email}
-          onChangeText={(text) => handleChange("email", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
-          accessible={true}
-          accessibilityLabel="Campo de correo electrónico"
-          accessibilityHint="Ingresá una dirección válida de correo"
-        />
-
-        <TextInput
-          placeholder="Contraseña"
-          placeholderTextColor="#aaa"
-          secureTextEntry
-          value={formData.password}
-          onChangeText={(text) => handleChange("password", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
-          accessible={true}
-          accessibilityLabel="Campo de contraseña"
-          accessibilityHint="Creá una contraseña segura"
-        />
-
-        <TouchableOpacity
-          onPress={handleRegister}
-          className="w-full bg-primary py-4 rounded-xl"
-          accessibilityRole="button"
-          accessibilityLabel="Botón crear cuenta"
-          accessibilityHint="Completa tu registro con los datos ingresados"
-        >
-          <Text className="text-white text-center font-semibold text-base">
-            Crear cuenta
-          </Text>
-        </TouchableOpacity>
-
-        {renderProgressDots()}
-      </View>
-    </PagerView>
+            {renderProgressDots()}
+          </View>
+        </ScrollView>
+      </PagerView>
+    </KeyboardAvoidingView>
   );
 }

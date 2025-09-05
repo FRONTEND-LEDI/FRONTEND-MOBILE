@@ -1,13 +1,13 @@
 import { getBooks } from "@/app/api/catalogue";
 import { authContext } from "@/app/context/authContext";
 import Banner from "@/assets/images/biblioteca.png";
-import BookCarousel from "@/components/BookCarousel";
 import Header from "@/components/Header";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useContext, useEffect, useState } from "react";
 import { Button, Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import BookCarousel from "../../../components/BookCarousel";
 export default function Home() {
   const router = useRouter();
   const { logout, isLogin } = useContext(authContext);

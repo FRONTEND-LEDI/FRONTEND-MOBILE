@@ -88,7 +88,7 @@ export const getBySearch = async (query: string) => {
 export const  getBooksByFiltering = async (filters: {
   theme?: string[];
   subgenre?: string[];
-  yearBook?: Date[];
+  yearBook?: string[];
   format?:string[];
   genre?:string[]
 })=> {

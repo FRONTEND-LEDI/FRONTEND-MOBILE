@@ -34,6 +34,7 @@ export const getYears = async () => {
       throw new Error(`Error del servidor: ${response.status}`);
     }
     const data = await response.json();
+    console.log("años", data);
     return data;
   } catch (error) {
     console.error("Error en getYears:", error); 
