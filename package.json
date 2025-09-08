@@ -12,11 +12,14 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@expo/config-plugins": "~10.1.1",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@rn-primitives/select": "^1.2.0",
+    "@rn-primitives/slot": "^1.2.0",
     "expo": "53.0.22",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.7",
@@ -48,7 +51,6 @@
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
     "tailwindcss": "^3.4.17",
-    "@expo/config-plugins": "~10.1.1",
     "undefined": "\\"
   },
   "devDependencies": {

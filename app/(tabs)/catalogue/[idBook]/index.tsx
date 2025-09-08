@@ -1,5 +1,10 @@
 import ButtonTheme from "@/app/(tabs)/catalogue/components/ButtonTheme";
 import { getAuthorById } from "@/app/api/author";
+import {
+  deleteBookProgress,
+  postSaveProgress,
+  updateBookProgress,
+} from "@/app/api/bookProgress"; // 🔗 Importamos funciones de progreso
 import { getBookById } from "@/app/api/catalogue";
 import { AuthorType } from "@/types/author";
 import { BookType } from "@/types/book";
@@ -15,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import StatusSelect from "../components/StatusSelect";
 
 export default function BookProps() {
   const router = useRouter();
@@ -24,26 +30,27 @@ export default function BookProps() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [author, setAuthor] = useState<AuthorType | null>(null);
-
-
+  const [status, setStatus] = useState<string>("Mi lista"); 
   // ! Traer los libros
+  useFocusEffect(
+    useCallback(() => {
+      console.log("book", idBook);
+      const fetchBook = async () => {
+        try {
+          const data = await getBookById(idBook as string);
+          setBook(data);
+        } catch (err) {
+          console.error("Error al obtener el libro:", err);
+          setError("No se pudo cargar el libro");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchBook();
+    }, [idBook])
+  );
 
-  useFocusEffect(useCallback(() => {
-    console.log('book', idBook)
-    const fetchBook = async () => {
-      try {
-        const data = await getBookById(idBook as string);
-        setBook(data);
-      } catch (err) {
-        console.error("Error al obtener el libro:", err);
-        setError("No se pudo cargar el libro");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBook();
-  }, [idBook]));
-  // ! Traer el autor 
+  // ! Traer el autor
   useEffect(() => {
     const getAuthor = async () => {
       try {
@@ -62,13 +69,42 @@ export default function BookProps() {
     }
   }, [book]);
 
+  // ! Manejar el progreso del libro
+  const handleStatusChange = async (newStatus: string) => {
+    if (!book) return;
+    try {
+      // Caso 1: eliminar progreso si se marca "Mi lista"
+      if (newStatus === "Mi lista") {
+        await deleteBookProgress(book._id);
+        setStatus("unmarked");
+        return;
+      }
+
+      // Caso 2: si nunca hubo progreso guardado → guardar
+      if (status === "unmarked") {
+        await postSaveProgress({
+          id: book._id,
+          status: newStatus,
+        });
+      } else {
+        // Caso 3: actualizar progreso existente
+        await updateBookProgress(book._id, newStatus);
+      }
+
+      setStatus(newStatus);
+    } catch (error) {
+      console.error("Error al actualizar progreso:", error);
+    }
+  };
+
+  // ! Reset cuando se desmonta
   useEffect(() => {
     return () => {
       setBook(null);
       setLoading(true);
       setError(null);
-    }
-  }, [])
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -145,9 +181,7 @@ export default function BookProps() {
           >
             <Text className="text-white font-semibold text-base">Leer</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="bg-secondary px-8 py-3 rounded-full shadow-md">
-            <Text className="text-white font-semibold text-base">Mi lista</Text>
-          </TouchableOpacity>
+          <StatusSelect value={status} onChange={handleStatusChange} />
         </View>
 
         {/* Sinopsis */}
@@ -162,9 +196,6 @@ export default function BookProps() {
 
         {/* Detalles del libro */}
         <View className="mb-6">
-          {/* <Text className="text-lg font-bold text-gray-800 mb-3 text-center">
-            Detalles del libro
-          </Text> */}
           <View className="flex-row justify-evenly my-9">
             <View className="mx-8">
               <Text className="text-gray-800 font-semibold">
