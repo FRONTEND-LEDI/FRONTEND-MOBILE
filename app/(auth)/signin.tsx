@@ -1,4 +1,5 @@
 import Logo from "@/assets/images/logosaludo.svg";
+import { IP_ADDRESS } from "@/constants/configEnv.js";
 import { useRouter } from "expo-router";
 import * as SecureStorage from "expo-secure-store";
 import { useContext, useState } from "react";
@@ -32,7 +33,7 @@ export default function LoginScreen() {
 
       await SecureStorage.setItemAsync("token", res.token);
 
-      const userReq = await fetch("http://192.168.0.20:3402/getUser", {
+      const userReq = await fetch(`http://${IP_ADDRESS}:3402/getUser`, {
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${res.token}`,
@@ -40,14 +41,16 @@ export default function LoginScreen() {
       });
 
       const userRes = await userReq.json();
-      console.log(userRes);
+      console.log(userRes, res.token);
 
       setIsLogin(true);
       router.replace("/(tabs)/home");
-
     } catch (error) {
       console.error("Error en el login:", error);
-      Alert.alert("Error", "No se pudo conectar con el servidor. Inténtalo nuevamente.");
+      Alert.alert(
+        "Error",
+        "No se pudo conectar con el servidor. Inténtalo nuevamente."
+      );
       await SecureStorage.deleteItemAsync("token");
     } finally {
       setIsSigningIn(false);
@@ -56,11 +59,14 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 justify-center items-center p-6 bg-white">
-
       <Logo width={150} height={150} />
 
-      <Text className="text-3xl font-extrabold text-primary mt-4">Iniciar sesión</Text>
-      <Text className="text-lg text-gray-500 mb-6">¡Nos alegra verte otra vez!</Text>
+      <Text className="text-3xl font-extrabold text-primary mt-4">
+        Iniciar sesión
+      </Text>
+      <Text className="text-lg text-gray-500 mb-6">
+        ¡Nos alegra verte otra vez!
+      </Text>
 
       <TextInput
         className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-700 shadow"
@@ -93,9 +99,14 @@ export default function LoginScreen() {
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("./signup")} className="flex-row">
+      <TouchableOpacity
+        onPress={() => router.push("./signup")}
+        className="flex-row"
+      >
         <Text className="text-base text-gray-500">¿Aún no tienes cuenta?</Text>
-        <Text className="text-base text-primary font-bold ml-1">Crear una ahora</Text>
+        <Text className="text-base text-primary font-bold ml-1">
+          Crear una ahora
+        </Text>
       </TouchableOpacity>
     </View>
   );

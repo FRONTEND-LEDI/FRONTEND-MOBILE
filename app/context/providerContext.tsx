@@ -4,53 +4,68 @@ import { authContext } from "./authContext";
 
 const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLogin, setIsLogin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Empieza en true, ya que está cargando el estado de autenticación
+  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
     const getData = async () => {
       try {
-        const token = await SecureStore.getItemAsync("token");
-        console.log("ProviderContext: Token recuperado:", token);
+        const storedToken = await SecureStore.getItemAsync("token");
 
-        if (!token) {
-          setIsLogin(false); // No hay token, no está logueado
+        if (!storedToken) {
+          setIsLogin(false);
+          setToken(null);
+          setUser(null);
           return;
         }
 
         // Si hay un token, intentar validarlo con el backend
-
         const res = await fetch("http://192.168.0.20:3402/getUser", {
           headers: {
             "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
+            authorization: `Bearer ${storedToken}`,
           },
         });
 
         const data = await res.json();
-        console.log("ProviderContext: Datos recibidos de /getUser:", data);
-
-       
-        setIsLogin(true);
-       
+        console.log("AAAAAAAAAA", data);
+        if (data && (data.user_data || data.user)) {
+          setIsLogin(true);
+          setToken(storedToken);
+          setUser(data.user_data || data.user);
+        } else {
+          setIsLogin(false);
+          setToken(storedToken);
+          setUser(null);
+          console.warn(
+            "ProviderContext: No se encontró user_data ni user en la respuesta de /getUser"
+          );
+        }
       } catch (error) {
         console.error("ProviderContext: Error al verificar sesión:", error);
         setIsLogin(false);
+        setToken(null);
+        setUser(null);
         await SecureStore.deleteItemAsync("token");
       } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     };
 
     getData();
   }, []);
- console.log(isLoading)
   const logout = async () => {
     await SecureStore.deleteItemAsync("token");
-    setIsLogin(false); 
+    setIsLogin(false);
+    setToken(null);
+    setUser(null);
   };
 
   return (
-    <authContext.Provider value={{ isLogin, setIsLogin, logout, isLoading }}>
+    <authContext.Provider
+      value={{ isLogin, setIsLogin, logout, isLoading, token, user }}
+    >
       {children}
     </authContext.Provider>
   );
