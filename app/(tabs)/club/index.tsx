@@ -1,3 +1,4 @@
+
 import { getClubsApi } from "@/app/api/club";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { useRouter } from "expo-router";

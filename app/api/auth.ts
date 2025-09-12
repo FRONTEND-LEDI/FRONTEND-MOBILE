@@ -98,7 +98,6 @@ export const getUserData = async (token: string) => {
     throw error;
   }
 };
-//10
 
 export const getCategories: () => Promise<string[]> = async () => {
   try {
