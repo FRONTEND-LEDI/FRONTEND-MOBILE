@@ -6,7 +6,19 @@ import {
   postSaveProgress,
   updateBookProgress,
 } from "@/app/api/bookProgress";
+import { getAuthorById } from "@/app/api/author";
+import {
+  deleteBookProgress,
+  getUserProgress,
+  postSaveProgress,
+  updateBookProgress,
+} from "@/app/api/bookProgress";
 import { getBookById } from "@/app/api/catalogue";
+import { authContext } from "@/app/context/authContext";
+import { AuthorType } from "@/types/author";
+import { BookType } from "@/types/book";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { authContext } from "@/app/context/authContext";
 import { AuthorType } from "@/types/author";
 import { BookType } from "@/types/book";
@@ -23,11 +35,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import StatusSelect from "../components/StatusSelect";
+import StatusSelect from "../components/StatusSelect";
 export default function BookProps() {
   const router = useRouter();
   const { idBook } = useLocalSearchParams();
   const { width } = Dimensions.get("window");
 
+  const [book, setBook] = useState<BookType | null>(null);
   const [book, setBook] = useState<BookType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,18 +155,41 @@ export default function BookProps() {
       >
         {/* Portada del libro */}
         <View className="items-center mt-6 mb-4 shadow-lg">
+        {/* Portada del libro */}
+        <View className="items-center mt-6 mb-4 shadow-lg">
           <Image
             source={{ uri: book.bookCoverImage.url_secura }}
             style={{
               width: width * 0.5,
               height: width * 0.7,
+              width: width * 0.5,
+              height: width * 0.7,
               resizeMode: "contain",
+              borderRadius: 10,
               borderRadius: 10,
             }}
           />
         </View>
 
         {/* Título y autor */}
+        <View className="items-center mb-4">
+          <Text className="text-center font-bold text-2xl text-gray-800 mb-1">
+            {book.title}
+          </Text>
+          <TouchableOpacity
+            className="flex-row items-center"
+            onPress={() =>
+              router.push(`./${idBook}/author/${book.author[0]._id}`)
+            }
+          >
+            <Image
+              source={{ uri: author?.avatar.url_secura }}
+              className="w-7 h-7 rounded-full mr-2 "
+            />
+            <Text className="text-base text-gray-600 font-medium">
+              {book.author[0].name}
+            </Text>
+          </TouchableOpacity>
         <View className="items-center mb-4">
           <Text className="text-center font-bold text-2xl text-gray-800 mb-1">
             {book.title}
@@ -187,8 +224,34 @@ export default function BookProps() {
             <Text className="text-white font-semibold text-base">Leer</Text>
           </TouchableOpacity>
           <StatusSelect value={status} onChange={handleStatusChange} />
+          <StatusSelect value={status} onChange={handleStatusChange} />
         </View>
 
+        {/* Sinopsis */}
+        <View className="mb-6 text-center flex-col justify-center items-center">
+          <Text className="text-lg font-semibold text-gray-800 mb-2">
+            Sobre {book.title}
+          </Text>
+          <Text className="text-gray-700 text-base leading-6">
+            {book.synopsis || "Sin descripción disponible."}
+          </Text>
+        </View>
+
+        {/* Detalles del libro */}
+        <View className="mb-6">
+          <View className="flex-row justify-evenly my-9">
+            <View className="mx-8">
+              <Text className="text-gray-800 font-semibold">
+                {book.genre || "Desconocido"}
+              </Text>
+              <Text className="text-gray-600 font-normal">Género</Text>
+            </View>
+            <View className="mx-8">
+              <Text className="text-gray-800 font-semibold">
+                {book.yearBook?.split("-")[0] || "Desconocido"}
+              </Text>
+              <Text className="text-gray-600 font-normal">Año</Text>
+            </View>
         {/* Sinopsis */}
         <View className="mb-6 text-center flex-col justify-center items-center">
           <Text className="text-lg font-semibold text-gray-800 mb-2">
@@ -227,6 +290,9 @@ export default function BookProps() {
               {book.theme.slice(0, 3).map((item, index) => (
                 <ButtonTheme key={index} data={{ text: item }} />
               ))}
+            </View>
+          </View>
+        )}
             </View>
           </View>
         )}
