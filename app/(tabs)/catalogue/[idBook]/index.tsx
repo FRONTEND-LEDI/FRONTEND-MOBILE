@@ -180,7 +180,7 @@ export default function BookProps() {
             onPress={() =>
               router.push({
                 pathname: `./${idBook}/read`,
-                params: { pdfUrl: book.contentBook.url_secura },
+                params: { idBook },
               })
             }
           >
