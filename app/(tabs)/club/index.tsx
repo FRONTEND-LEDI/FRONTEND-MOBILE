@@ -1,9 +1,14 @@
 import { getClubsApi } from "@/app/api/club";
+import { IP_ADDRESS } from "@/constants/configEnv";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, ScrollView, Text, View } from "react-native";
 import TopicCard from "../../../components/club/TopicCard";
 import CircleButton from "../../../components/club/addButton";
+
+import { io } from "socket.io-client";
+const URL = `http://${IP_ADDRESS}:3402/ `;
+const socket = io(URL);
 
 /* const trendingPosts = [
   {

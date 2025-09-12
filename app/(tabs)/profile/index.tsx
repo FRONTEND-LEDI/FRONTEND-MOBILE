@@ -1,3 +1,4 @@
+import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 interface UserAvatarData {
   url_secura: string;
   id_image: string;
@@ -59,29 +61,27 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+      <View style={styles.header}></View>
+      <View style={styles.profileSectionContainer}>
+        <View style={styles.profileSection}>
+          {user ? (
+            <>
+              <View style={styles.profilePic}>
+                <Image
+                  className="w-full h-full rounded-full"
+                  source={{ uri: user.avatar.avatars.url_secura }}
+                />
+              </View>
+              <Text style={styles.name}>{user.name}</Text>
+              <Text style={styles.email}>{user.email}</Text>
+              <Text style={styles.email}>Usuario: {user.userName}</Text>
+              <Text style={styles.email}>Nivel: {user.nivel}</Text>
+            </>
+          ) : (
+            <Text style={styles.email}>Cargando datos...</Text>
+          )}
+        </View>
       </View>
-
-      <View style={styles.profileSection}>
-        {user ? (
-          <>
-            <View style={styles.profilePic}>
-              <Image
-                className="w-full h-full rounded-full"
-                source={{ uri: user.avatar.avatars.url_secura }}
-              />
-            </View>
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
-            <Text style={styles.email}>Usuario: {user.userName}</Text>
-            <Text style={styles.email}>Nivel: {user.nivel}</Text>
-          </>
-        ) : (
-          <Text style={styles.email}>Cargando datos...</Text>
-        )}
-      </View>
-
       <View style={styles.divider} />
 
       <View style={styles.section}>
@@ -140,20 +140,34 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 20,
+    paddingTop: 80,
+    paddingBottom: 25,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f8d49a",
-    backgroundColor: "#f29200",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    borderBottomColor: colors.gray,
+    backgroundColor: colors.primary,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
+  },
+  profileSectionContainer: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginTop: -40,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    padding: 20,
+    alignItems: "center",
   },
   profileSection: {
     alignItems: "center",
@@ -191,7 +205,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#a7c257",
+    color: colors.secondary,
     marginBottom: 15,
   },
   sectionItem: {

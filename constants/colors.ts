@@ -1,13 +1,12 @@
 const colors = {
-  primary: "#3662F0",
+  primary: "#f29200",
+  secondary: "#a7c257",
   background: "#F9FAFB",
-  cardCSharp: "#7E57C2",
-  cardJava: "#42A5F5",
   text: "#1F2937",
   gray: "#6B7280",
   white: "#FFFFFF",
 };
- const darkColors = {
+const darkColors = {
   primary: "#1E40AF",
   background: "#111827",
   cardCSharp: "#4A148C",
