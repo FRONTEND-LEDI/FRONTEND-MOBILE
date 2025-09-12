@@ -6,6 +6,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+
         tabBarActiveTintColor: "#f5f5f5",       
         tabBarInactiveTintColor: "#F8D49A",        
         tabBarStyle: {
@@ -28,7 +29,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="catalogue"
+        name="catalogue/index"
         options={{
           title: "Catálogo",
           tabBarIcon: ({ color }) => (
@@ -54,7 +55,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-      
     </Tabs>
   );
 }

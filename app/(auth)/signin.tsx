@@ -1,3 +1,4 @@
+
 import Logo from "@/assets/images/avatar-con-anteojos.png";
 import { URI } from "@/constants/ip";
 import { useRouter } from "expo-router";
@@ -43,17 +44,23 @@ export default function LoginScreen() {
 
       await SecureStorage.setItemAsync("token", res.token);
       const userReq = await fetch(`http://${URI}/getUser`, {
+
+
+    
+
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${res.token}`,
         },
       });
 
+
       if (!userReq.ok) {
         throw new Error("No se pudo obtener la información del usuario.");
       }
 
-      const userRes = await userReq.json();
+
+  const userRes = await userReq.json();
       console.log("userRes", userRes);
       setIsLogin(true);
       router.replace("/(tabs)/home");
@@ -70,7 +77,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
+ <KeyboardAvoidingView
       className="flex-1"
       behavior={Platform.OS === "ios" ? "padding" : "padding"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}

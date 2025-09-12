@@ -1,3 +1,4 @@
+
 import { getBooks, getBooksByFiltering } from "@/app/api/catalogue";
 import { getFormats, getSubgenres, getYears } from "@/app/api/types";
 import Header from "@/components/Header";
@@ -180,3 +181,4 @@ export default function Products() {
     </SafeAreaView>
   );
 }
+

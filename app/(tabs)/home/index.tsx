@@ -1,3 +1,4 @@
+
 import { getBooks } from "@/app/api/catalogue";
 import { authContext } from "@/app/context/authContext";
 import Banner from "@/assets/images/biblioteca.png";
@@ -59,3 +60,4 @@ export default function Home() {
     </SafeAreaView>
   );
 }
+
