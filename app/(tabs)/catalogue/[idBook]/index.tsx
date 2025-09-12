@@ -2,14 +2,16 @@ import ButtonTheme from "@/app/(tabs)/catalogue/components/ButtonTheme";
 import { getAuthorById } from "@/app/api/author";
 import {
   deleteBookProgress,
+  getUserProgress,
   postSaveProgress,
   updateBookProgress,
-} from "@/app/api/bookProgress"; // 🔗 Importamos funciones de progreso
+} from "@/app/api/bookProgress";
 import { getBookById } from "@/app/api/catalogue";
+import { authContext } from "@/app/context/authContext";
 import { AuthorType } from "@/types/author";
 import { BookType } from "@/types/book";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -21,24 +23,31 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import StatusSelect from "../components/StatusSelect";
-
 export default function BookProps() {
   const router = useRouter();
   const { idBook } = useLocalSearchParams();
   const { width } = Dimensions.get("window");
+
   const [book, setBook] = useState<BookType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [author, setAuthor] = useState<AuthorType | null>(null);
-  const [status, setStatus] = useState<string>("Mi lista"); 
-  // ! Traer los libros
+  const [status, setStatus] = useState<string>("Mi lista"); // 🔄 default "unmarked"
+  const { user } = useContext(authContext);
+  // ! Traer los datos del libro
   useFocusEffect(
     useCallback(() => {
-      console.log("book", idBook);
       const fetchBook = async () => {
         try {
           const data = await getBookById(idBook as string);
           setBook(data);
+
+          const progress = await getUserProgress();
+          if (progress?.status) {
+            setStatus(progress.status);
+          } else {
+            setStatus("unmarked");
+          }
         } catch (err) {
           console.error("Error al obtener el libro:", err);
           setError("No se pudo cargar el libro");
@@ -53,14 +62,13 @@ export default function BookProps() {
   // ! Traer el autor
   useEffect(() => {
     const getAuthor = async () => {
+      if (!book) return;
       try {
-        const data = await getAuthorById(book?.author[0]._id as string);
+        const data = await getAuthorById(book.author[0]._id as string);
         setAuthor(data);
       } catch (error) {
         console.error("Error al obtener el autor:", error);
         setError("No se pudo cargar el autor");
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -73,21 +81,18 @@ export default function BookProps() {
   const handleStatusChange = async (newStatus: string) => {
     if (!book) return;
     try {
-      // Caso 1: eliminar progreso si se marca "Mi lista"
-      if (newStatus === "Mi lista") {
+      if (newStatus === "unmarked") {
         await deleteBookProgress(book._id);
         setStatus("unmarked");
         return;
       }
 
-      // Caso 2: si nunca hubo progreso guardado → guardar
       if (status === "unmarked") {
-        await postSaveProgress({
-          id: book._id,
-          status: newStatus,
-        });
+        await postSaveProgress(
+          { idBook: book._id, status: newStatus },
+          user?.id as string
+        );
       } else {
-        // Caso 3: actualizar progreso existente
         await updateBookProgress(book._id, newStatus);
       }
 
@@ -97,7 +102,7 @@ export default function BookProps() {
     }
   };
 
-  // ! Reset cuando se desmonta
+  // ! Reset al desmontar
   useEffect(() => {
     return () => {
       setBook(null);

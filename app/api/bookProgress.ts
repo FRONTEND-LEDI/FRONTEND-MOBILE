@@ -2,27 +2,41 @@ import { URI } from "@/constants/ip";
 import * as SecureStore from "expo-secure-store";
 
 
-export const postSaveProgress = async (bookDate: { id: string; status: string }) => {
+
+export const postSaveProgress = async (
+  bookData: { idBook: string; status: string },
+  idUser: string
+) => {
   try {
     const token = await SecureStore.getItemAsync("token");
     if (!token) throw new Error("No se encontró el token.");
 
-    const response = await fetch(`http://${URI}/progress`, {
+    const response = await fetch(`http://${URI}/SaveProgress`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(bookDate), // mandar el objeto directamente
+      body: JSON.stringify({
+        idUser, 
+        idBook: bookData.idBook,
+        status: bookData.status,
+        startDate: new Date().toISOString(), 
+      }),
     });
 
-    return await response.json();
+  
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error en postSaveProgress:", error);
   }
 };
 
-export const updateBookProgress = async (id: string, status: string) => {
+
+
+// Actualizar progreso
+export const updateBookProgress = async (idBook: string, status: string) => {
   try {
     const token = await SecureStore.getItemAsync("token");
     if (!token) throw new Error("No se encontró el token.");
@@ -33,16 +47,19 @@ export const updateBookProgress = async (id: string, status: string) => {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ idBook, status }),
     });
 
-    return await response.json();
+    const data = await response.json();
+
+    return data;
   } catch (error) {
     console.error("Error en updateBookProgress:", error);
   }
 };
 
-export const deleteBookProgress = async (id: string) => {
+// Eliminar progreso
+export const deleteBookProgress = async (idBook: string) => {
   try {
     const token = await SecureStore.getItemAsync("token");
     if (!token) throw new Error("No se encontró el token.");
@@ -53,11 +70,37 @@ export const deleteBookProgress = async (id: string) => {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ idBook }),
     });
 
-    return await response.json();
+    const data = await response.json();
+    return data
   } catch (error) {
     console.error("Error en deleteBookProgress:", error);
   }
 };
+
+export const getUserProgress = async () => {
+  try {
+    const token = await SecureStore.getItemAsync("token");
+    if (!token) throw new Error("No se encontró el token.");
+
+    const response = await fetch(`http://${URI}/Progress`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${token}`, 
+      },
+    });
+
+    if (!response.ok) throw new Error("Error al obtener progresos.");
+
+    const data = await response.json(); 
+
+    return data;
+  } catch (error) {
+    console.error("Error en getUserProgress:", error);
+    return null;
+  }
+};
+

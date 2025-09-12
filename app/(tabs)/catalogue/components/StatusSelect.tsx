@@ -70,7 +70,7 @@ export default function StatusSelect({ value, onChange }: StatusSelectProps) {
                       : "border-gray-200"
                   }`}
                   onPress={() => {
-                    onChange(option.label);
+                    onChange(option.value);
                     setModalVisible(false);
                   }}
                 >
