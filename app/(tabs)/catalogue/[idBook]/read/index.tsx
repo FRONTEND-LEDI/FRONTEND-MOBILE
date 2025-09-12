@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
 export default function ReadBook() {
-  const { pdfUrl } = useLocalSearchParams();
+  const { pdfUrl} = useLocalSearchParams();
 
   if (!pdfUrl) {
     return (
@@ -20,7 +20,7 @@ export default function ReadBook() {
   const googleDocsUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(
     pdfUrl as string
   )}&embedded=true`;
-
+ //const uri = "http://10.254.197.191:5173"
   return (
     <SafeAreaView className="flex-1 bg-white">
       

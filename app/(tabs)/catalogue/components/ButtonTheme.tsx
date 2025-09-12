@@ -10,8 +10,8 @@ type TextProps = {
 }
 export default function ButtonTheme({ data }: TextProps) {
   return (
-    <TouchableOpacity className='bg-secondary p-2 rounded-full justifify-center items-center'>
-        <Text className='text-white font-semibold text-center'>{data.text}</Text>
+    <TouchableOpacity className='bg-white border-[1px] border-secondary p-3 rounded-full justifify-center items-center'>
+        <Text className='text-primary  font-semibold text-center'>{data.text}</Text>
     </TouchableOpacity>
   )
 }

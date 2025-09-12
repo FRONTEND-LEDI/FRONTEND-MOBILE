@@ -15,22 +15,19 @@ export default function Products() {
   const [filteredBooks, setFilteredBooks] = useState<any[]>([]);
   const [subgenres, setSubgenres] = useState<string[]>([]);
   const [formats, setFormats] = useState<string[]>([]);
-  const [yearBook, setYearbook] = useState<string[]>([]);
-  const [filters, setFilters] = useState<{
-    genre?: string[] | null;
-    subgenre?: string[] | null;
-    format?: string[] | null;
-    yearBook?: string[] | null;
-    theme?: string[] | null;
-  }>({
-    genre: null,
-    subgenre: null,
-    format: null,
-    yearBook: null,
-    theme: null,
+  const [yearBook, setYearBook] = useState<string[]>([]);
+
+  // Inicialización de filtros con arrays vacíos
+  const [filters, setFilters] = useState({
+    genre: [],
+    subgenre: [],
+    format: [],
+    yearBook: [],
+    theme: [],
   });
 
   // Obtener Subgéneros
+
   useEffect(() => {
     const getData = async () => {
       try {
@@ -61,7 +58,8 @@ export default function Products() {
     const getData = async () => {
       try {
         const response = await getYears();
-        setYearbook(response);
+        setYearBook(response);
+       
       } catch (error) {
         console.log("Error al obtener años:", error);
       }
@@ -83,21 +81,29 @@ export default function Products() {
     getData();
   }, []);
 
-  // Aplicar Filtros
-  const applyFilters = async () => {
+   useEffect(() => {
+     const applyFilters = async () => {
     try {
-      const response = await getBooksByFiltering({
-        genre: filters.genre ?? [],
-        theme: filters.theme ?? [],
-        subgenre: filters.subgenre ?? [],
-        format: filters.format ?? [],
-        yearBook: filters.yearBook?.map((year) => new Date(year)) ?? [],
-      });
+      const response = await getBooksByFiltering(filters);
       setFilteredBooks(response);
+
+      
     } catch (error) {
       console.error("Error al aplicar filtros:", error);
     }
   };
+  applyFilters();
+  }, [filters]);
+
+  // Aplicar Filtros
+  // const applyFilters = async () => {
+  //   try {
+  //     const response = await getBooksByFiltering(filters);
+  //     setFilteredBooks(response);
+  //   } catch (error) {
+  //     console.error("Error al aplicar filtros:", error);
+  //   }
+  // };
 
   // Actualizar Filtros
   const handleFilterChange = (key: string, value: string | null) => {
@@ -106,10 +112,21 @@ export default function Products() {
       [key]: value ? [value] : [],
     }));
   };
+//   const handleFilterChange = (key: string, value: string | null) => {
+//   setFilters((prev) => ({
+//     ...prev,
+//     [key]: value 
+//       ? key === "yearBook" 
+//         ? [new Date(`${value}-01-01`).toISOString()] 
+//         : [value] 
+//       : [],
+//   }));
+// };
 
-  useEffect(() => {
-    applyFilters();
-  }, [filters]);
+ 
+
+    
+
 
   return (
     <SafeAreaView className="flex-1">
@@ -140,7 +157,9 @@ export default function Products() {
         {/* Catálogo */}
         {filteredBooks.length === 0 ? (
           <Text className="mt-10 text-center text-gray-500 italic">
-            No hay libros para los filtros seleccionados
+            
+           
+            No se encontraron libros con los filtros seleccionados
           </Text>
         ) : (
           <FlatList

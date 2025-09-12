@@ -59,7 +59,10 @@ export default function LoginScreen() {
       router.replace("/(tabs)/home");
     } catch (error) {
       console.error("Error en el login:", error);
-      Alert.alert("Error", "No se pudo conectar con el servidor. Inténtalo nuevamente.");
+      Alert.alert(
+        "Error",
+        "No se pudo conectar con el servidor. Inténtalo nuevamente."
+      );
       await SecureStorage.deleteItemAsync("token");
     } finally {
       setIsSigningIn(false);
@@ -76,7 +79,6 @@ export default function LoginScreen() {
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
-          
         >
           <View
             className="flex-1 justify-center items-center p-6 bg-white"
@@ -138,9 +140,14 @@ export default function LoginScreen() {
               accessibilityState={{ disabled: isSigningIn }}
             >
               {isSigningIn ? (
-                <ActivityIndicator color="#fff" accessibilityLabel="Iniciando sesión..." />
+                <ActivityIndicator
+                  color="#fff"
+                  accessibilityLabel="Iniciando sesión..."
+                />
               ) : (
-                <Text className="text-white text-lg font-semibold">Ingresar</Text>
+                <Text className="text-white text-lg font-semibold">
+                  Ingresar
+                </Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity
@@ -150,8 +157,12 @@ export default function LoginScreen() {
               accessibilityLabel="Crear cuenta"
               accessibilityHint="Navega a la pantalla para crear una nueva cuenta"
             >
-              <Text className="text-base text-gray-500">¿Aún no tienes cuenta?</Text>
-              <Text className="text-base text-primary font-bold ml-1">Crear una ahora</Text>
+              <Text className="text-base text-gray-500">
+                ¿Aún no tienes cuenta?
+              </Text>
+              <Text className="text-base text-primary font-bold ml-1">
+                Crear una ahora
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
