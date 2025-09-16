@@ -3,10 +3,7 @@ import { Stack } from "expo-router";
 export default function ProductsLayout() {
   return (
     <Stack>
-      <Stack.Screen 
-      name="index" 
-      options={{ headerShown: false }} 
-      />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
         name="[idBook]/index"
         options={{
@@ -16,9 +13,8 @@ export default function ProductsLayout() {
           },
           headerTintColor: "#fff",
         }}
-        
       />
-      
+
       <Stack.Screen
         name="[idBook]/read/index"
         options={{
@@ -28,9 +24,8 @@ export default function ProductsLayout() {
           },
           headerTintColor: "#fff",
         }}
-        
       />
-      
+
       <Stack.Screen
         name="[idBook]/author/[idAuthor]"
         options={{
@@ -40,7 +35,6 @@ export default function ProductsLayout() {
           },
           headerTintColor: "#fff",
         }}
-        
       />
     </Stack>
   );

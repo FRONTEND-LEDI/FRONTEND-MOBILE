@@ -7,12 +7,12 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
 
-        tabBarActiveTintColor: "#f5f5f5",       
-        tabBarInactiveTintColor: "#F8D49A",        
+        tabBarActiveTintColor: "#f5f5f5",
+        tabBarInactiveTintColor: "#F8D49A",
         tabBarStyle: {
-          backgroundColor: "#D97706",           
-          borderTopWidth: 0,                    // elimina la línea superior
-          height: 80,                           
+          backgroundColor: "#D97706",
+          borderTopWidth: 0,
+          height: 80,
         },
         tabBarLabelStyle: {
           fontSize: 12,

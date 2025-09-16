@@ -1,23 +1,20 @@
-import { getClubsApi } from "@/app/api/club";
-import { useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 type Props = {
   title: string;
-  posts: number;
+  posts?: number;
   color: string;
   description: string;
 };
 
-export default function TopicCard({ title, posts, color }: Props) {
-  useEffect(() => {
-    getClubsApi();
-  });
+export default function TopicCard({ title, posts, description, color }: Props) {
   return (
-    <TouchableOpacity style={[styles.card, { backgroundColor: color }]}>
+    <View style={[styles.card, { backgroundColor: color }]}>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>{posts} posts</Text>
-    </TouchableOpacity>
+      {/*       <Text style={styles.subtitle}>{posts} posts</Text>{" "}
+       */}
+      <Text style={styles.subtitle}>{description} </Text>
+    </View>
   );
 }
 

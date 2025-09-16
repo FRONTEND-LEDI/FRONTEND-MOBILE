@@ -1,15 +1,20 @@
 import { getAuthorById } from "@/app/api/author";
-import { AuthorType } from '@/types/author';
+import { AuthorType } from "@/types/author";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Image, SafeAreaView, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 export default function Author() {
   const { idAuthor } = useLocalSearchParams();
   const [author, setAuthor] = useState<AuthorType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
- 
 
   useEffect(() => {
     const fetchAuthor = async () => {

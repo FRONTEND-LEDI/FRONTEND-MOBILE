@@ -1,4 +1,3 @@
-
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -7,12 +6,14 @@ import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
   Image,
+  StatusBar,
   StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface UserAvatarData {
   url_secura: string;
@@ -39,7 +40,6 @@ const ProfileScreen = () => {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
-  console.log(user);
   useEffect(() => {
     const fetchUser = async () => {
       const token = await SecureStore.getItemAsync("token");
@@ -61,7 +61,7 @@ const ProfileScreen = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}></View>
       <View style={styles.profileSectionContainer}>
         <View style={styles.profileSection}>
@@ -73,17 +73,17 @@ const ProfileScreen = () => {
                   source={{ uri: user.avatar.avatars.url_secura }}
                 />
               </View>
-              <Text style={styles.name}>{user.name}</Text>
+              <View style={styles.nameContainer}>
+                <Text style={styles.name}>{user.name}</Text>
+                <MaterialIcons name="verified" size={18} color="#4a90e2" />
+              </View>
               <Text style={styles.email}>{user.email}</Text>
-              <Text style={styles.email}>Usuario: {user.userName}</Text>
-              <Text style={styles.email}>Nivel: {user.nivel}</Text>
             </>
           ) : (
             <Text style={styles.email}>Cargando datos...</Text>
           )}
         </View>
       </View>
-      <View style={styles.divider} />
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>GENERAL</Text>
@@ -134,7 +134,8 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+      <StatusBar backgroundColor={colors.primary} animated />
+    </SafeAreaView>
   );
 };
 
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 80,
-    paddingBottom: 25,
+    paddingBottom: 70,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -158,9 +159,9 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   profileSectionContainer: {
-    backgroundColor: "#fff",
-    marginHorizontal: 20,
-    marginTop: -40,
+    backgroundColor: colors.background,
+    marginHorizontal: 40,
+    marginTop: -60,
     borderRadius: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -169,6 +170,8 @@ const styles = StyleSheet.create({
     elevation: 5,
     padding: 20,
     alignItems: "center",
+    borderWidth: 7,
+    borderColor: colors.background,
   },
   profileSection: {
     alignItems: "center",
@@ -181,9 +184,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8d49a",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 15,
-    borderWidth: 2,
-    borderColor: "#a7c257",
+    marginBottom: 10,
+    marginTop: -100,
+    borderWidth: 7,
+    borderColor: colors.background,
+  },
+  nameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
   },
   name: {
     fontSize: 20,
@@ -194,11 +203,6 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: "#666",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#eee",
-    marginHorizontal: 20,
   },
   section: {
     padding: 20,
