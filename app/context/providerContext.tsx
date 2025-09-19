@@ -8,7 +8,6 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<UserType>(null);
 
-
   useEffect(() => {
     const getData = async () => {
       try {
@@ -27,17 +26,23 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         const data = await res.json();
 
-
         console.log("data", data);
 
         // Guardamos los datos del usuario en el contexto
         setUser(data.user_data); 
         setIsLogin(true);
-
       } catch (error) {
         console.error("Error al verificar sesión:", error);
         setIsLogin(false);
+        setUser(null);
+        await SecureStore.deleteItemAsync("token");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    getData();
+  }, []);
 
   const logout = async () => {
     await SecureStore.deleteItemAsync("token");

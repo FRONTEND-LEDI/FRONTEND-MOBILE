@@ -2,28 +2,16 @@ import ButtonTheme from "@/app/(tabs)/catalogue/components/ButtonTheme";
 import { getAuthorById } from "@/app/api/author";
 import {
   deleteBookProgress,
-  getUserProgress,
+  getBookProgressById,
   postSaveProgress,
-  updateBookProgress,
-} from "@/app/api/bookProgress";
-import { getAuthorById } from "@/app/api/author";
-import {
-  deleteBookProgress,
-  getUserProgress,
-  postSaveProgress,
-  updateBookProgress,
 } from "@/app/api/bookProgress";
 import { getBookById } from "@/app/api/catalogue";
-import { authContext } from "@/app/context/authContext";
 import { AuthorType } from "@/types/author";
 import { BookType } from "@/types/book";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { authContext } from "@/app/context/authContext";
-import { AuthorType } from "@/types/author";
-import { BookType } from "@/types/book";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -35,20 +23,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import StatusSelect from "../components/StatusSelect";
-import StatusSelect from "../components/StatusSelect";
+
 export default function BookProps() {
   const router = useRouter();
   const { idBook } = useLocalSearchParams();
   const { width } = Dimensions.get("window");
+  const [status, setStatus] = useState<string>("");
 
-  const [book, setBook] = useState<BookType | null>(null);
   const [book, setBook] = useState<BookType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [author, setAuthor] = useState<AuthorType | null>(null);
-  const [status, setStatus] = useState<string>("Mi lista"); 
-  const { user } = useContext(authContext);
-  // ! Traer los datos del libro
+
   useFocusEffect(
     useCallback(() => {
       const fetchBook = async () => {
@@ -56,11 +42,9 @@ export default function BookProps() {
           const data = await getBookById(idBook as string);
           setBook(data);
 
-          const progress = await getUserProgress();
-          if (progress?.status) {
+          const progress = await getBookProgressById(idBook as string);
+          if (progress) {
             setStatus(progress.status);
-          } else {
-            setStatus("unmarked");
           }
         } catch (err) {
           console.error("Error al obtener el libro:", err);
@@ -73,7 +57,6 @@ export default function BookProps() {
     }, [idBook])
   );
 
-  // ! Traer el autor
   useEffect(() => {
     const getAuthor = async () => {
       if (!book) return;
@@ -91,32 +74,29 @@ export default function BookProps() {
     }
   }, [book]);
 
-  // ! Manejar el progreso del libro
   const handleStatusChange = async (newStatus: string) => {
-    if (!book) return;
     try {
-      if (newStatus === "unmarked") {
-        await deleteBookProgress(book._id);
-        setStatus("unmarked");
-        return;
-      }
-
-      if (status === "unmarked") {
-        await postSaveProgress(
-          { idBook: book._id, status: newStatus },
-          user?.id as string
-        );
+      if (newStatus === "delete") {
+        await deleteBookProgress(idBook as string);
+        setStatus("");
       } else {
-        await updateBookProgress(book._id, newStatus);
+        setStatus(newStatus);
+        await postSaveProgress({
+          idBook: idBook as string,
+          status: newStatus,
+          position: 0,
+          percent: 0,
+          total: 0,
+          unit: "pages",
+        });
       }
 
-      setStatus(newStatus);
+      console.log("Progreso actualizado correctamente", newStatus);
     } catch (error) {
-      console.error("Error al actualizar progreso:", error);
+      console.error("Error guardando progreso:", error);
     }
   };
 
-  // ! Reset al desmontar
   useEffect(() => {
     return () => {
       setBook(null);
@@ -155,17 +135,12 @@ export default function BookProps() {
       >
         {/* Portada del libro */}
         <View className="items-center mt-6 mb-4 shadow-lg">
-        {/* Portada del libro */}
-        <View className="items-center mt-6 mb-4 shadow-lg">
           <Image
-            source={{ uri: book.bookCoverImage.url_secura }}
+            source={{ uri: book.bookCoverImage?.url_secura }}
             style={{
               width: width * 0.5,
               height: width * 0.7,
-              width: width * 0.5,
-              height: width * 0.7,
               resizeMode: "contain",
-              borderRadius: 10,
               borderRadius: 10,
             }}
           />
@@ -178,31 +153,11 @@ export default function BookProps() {
           </Text>
           <TouchableOpacity
             className="flex-row items-center"
-            onPress={() =>
-              router.push(`./${idBook}/author/${book.author[0]._id}`)
-            }
+            onPress={() => router.push(`./${idBook}/author/${book.author[0]._id}`)}
           >
             <Image
               source={{ uri: author?.avatar.url_secura }}
-              className="w-7 h-7 rounded-full mr-2 "
-            />
-            <Text className="text-base text-gray-600 font-medium">
-              {book.author[0].name}
-            </Text>
-          </TouchableOpacity>
-        <View className="items-center mb-4">
-          <Text className="text-center font-bold text-2xl text-gray-800 mb-1">
-            {book.title}
-          </Text>
-          <TouchableOpacity
-            className="flex-row items-center"
-            onPress={() =>
-              router.push(`./${idBook}/author/${book.author[0]._id}`)
-            }
-          >
-            <Image
-              source={{ uri: author?.avatar.url_secura }}
-              className="w-7 h-7 rounded-full mr-2 "
+              className="w-7 h-7 rounded-full mr-2"
             />
             <Text className="text-base text-gray-600 font-medium">
               {book.author[0].name}
@@ -210,48 +165,96 @@ export default function BookProps() {
           </TouchableOpacity>
         </View>
 
-        {/* Botones de acción */}
-        <View className="flex-row justify-center gap-4 mb-6">
-          <TouchableOpacity
-            className="bg-primary px-8 py-3 rounded-full shadow-md"
-            onPress={() =>
-              router.push({
-                pathname: `./${idBook}/read`,
-                params: { idBook },
-              })
-            }
-          >
-            <Text className="text-white font-semibold text-base">Leer</Text>
-          </TouchableOpacity>
-          <StatusSelect value={status} onChange={handleStatusChange} />
-          <StatusSelect value={status} onChange={handleStatusChange} />
+        <View className="flex-row justify-center items-center gap-4 mb-6">
+          {/* Botón  Escuchar */}
+
+          {book.format === "ebook" && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+              style={{
+                backgroundColor: "#D97706",
+                shadowColor: "#D97706",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+                minWidth: 150, // Mismo ancho mínimo
+                maxWidth: 150, // Mismo ancho máximo
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: `./${idBook}/read`,
+                  params: { idBook },
+                })
+              }
+            >
+              <Ionicons name="book" size={16} color="#F8D49A" />
+              <Text className="text-white font-semibold text-base ml-2">
+                Leer
+              </Text>
+            </TouchableOpacity>
+          )}
+          {book.format === "audiobook" && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+              style={{
+                backgroundColor: "#D97706",
+                shadowColor: "#D97706",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+                minWidth: 150, // Mismo ancho mínimo
+                maxWidth: 150, // Mismo ancho máximo
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: `./${idBook}/watch`,
+                  params: { mediaSource: book.contentBook?.url_secura, idBook : book.contentBook?.url_secura },
+                })
+              }
+            >
+              <MaterialIcons name="multitrack-audio" size={16} color="#F8D49A" />
+              <Text className="text-white font-semibold text-base ml-2">
+                Escuchar
+              </Text>
+            </TouchableOpacity>
+          )}
+          {book.format === "videobook" && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+              style={{
+                backgroundColor: "#D97706",
+                shadowColor: "#D97706",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+                minWidth: 150, // Mismo ancho mínimo
+                maxWidth: 150, // Mismo ancho máximo
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: `./${idBook}/watch`,
+                  params: { mediaSource: book.contentBook?.url_secura, idBook : book.contentBook?.url_secura},
+                })
+              }
+            >
+              <MaterialIcons name="video-collection" size={16} color="#F8D49A" />
+              <Text className="text-white font-semibold text-base ml-2">
+                Ver video
+              </Text>
+            </TouchableOpacity>
+          )
+
+          }
+
+          {/* Status select */}
+          <View style={{ minWidth: 150, maxWidth: 150 }}>
+            <StatusSelect value={status} onChange={handleStatusChange} />
+          </View>
         </View>
 
-        {/* Sinopsis */}
-        <View className="mb-6 text-center flex-col justify-center items-center">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
-            Sobre {book.title}
-          </Text>
-          <Text className="text-gray-700 text-base leading-6">
-            {book.synopsis || "Sin descripción disponible."}
-          </Text>
-        </View>
-
-        {/* Detalles del libro */}
-        <View className="mb-6">
-          <View className="flex-row justify-evenly my-9">
-            <View className="mx-8">
-              <Text className="text-gray-800 font-semibold">
-                {book.genre || "Desconocido"}
-              </Text>
-              <Text className="text-gray-600 font-normal">Género</Text>
-            </View>
-            <View className="mx-8">
-              <Text className="text-gray-800 font-semibold">
-                {book.yearBook?.split("-")[0] || "Desconocido"}
-              </Text>
-              <Text className="text-gray-600 font-normal">Año</Text>
-            </View>
         {/* Sinopsis */}
         <View className="mb-6 text-center flex-col justify-center items-center">
           <Text className="text-lg font-semibold text-gray-800 mb-2">
@@ -290,9 +293,6 @@ export default function BookProps() {
               {book.theme.slice(0, 3).map((item, index) => (
                 <ButtonTheme key={index} data={{ text: item }} />
               ))}
-            </View>
-          </View>
-        )}
             </View>
           </View>
         )}

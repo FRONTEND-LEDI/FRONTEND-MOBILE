@@ -1,13 +1,18 @@
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
+"use client";
 
+import { Ionicons } from "@expo/vector-icons";
+import type React from "react";
+import { useState } from "react";
+import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
 
 type StatusOption = {
   label: string;
   value: string;
-  icon: React.ComponentProps<typeof Ionicons>["name"]; // Use the Ionicons component's name prop type
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  color: string;
+  bgColor: string;
 };
+
 type StatusSelectProps = {
   value: string;
   onChange: (value: string) => void;
@@ -17,84 +22,198 @@ export default function StatusSelect({ value, onChange }: StatusSelectProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
   const options: StatusOption[] = [
-    { label: "Leyendo", value: "reading", icon: "book" },
-    { label: "Leído", value: "finished", icon: "checkmark-done" },
-    { label: "Abandonado", value: "abandoned", icon: "close-circle" },
-    { label: "Pendiente", value: "pending", icon: "time" },
+    {
+      label: "Leyendo",
+      value: "reading",
+      icon: "book",
+      color: "#D97706",
+      bgColor: "#F8D49A",
+    },
+    {
+      label: "Leído",
+      value: "finished",
+      icon: "checkmark-done",
+      color: "#D97706",
+      bgColor: "#F8D49A",
+    },
+    {
+      label: "Abandonado",
+      value: "abandoned",
+      icon: "close-circle",
+      color: "#D97706",
+      bgColor: "#F8D49A",
+    },
+    {
+      label: "Pendiente",
+      value: "pending",
+      icon: "time",
+      color: "#D97706",
+      bgColor: "#F8D49A",
+    },
+     {
+      label: "Eliminar",
+      value: "delete",
+      icon: "trash",
+      color: "#D97706",
+      bgColor: "#F8D49A",
+    },
+
   ];
+
+  // buscar el label actual
+  const currentOption = options.find((opt) => opt.value === value);
 
   return (
     <>
-      {/* Botón que abre el modal */}
       <TouchableOpacity
-        className="bg-primary px-6 py-3 rounded-full shadow-lg active:opacity-80"
+        className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+        style={{
+          backgroundColor: "#D97706",
+          shadowColor: "#D97706",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
+          minWidth: "100%", // Ocupa todo el ancho del contenedor padre
+        }}
         onPress={() => setModalVisible(true)}
       >
-        <Text className="text-white font-semibold text-base">
-          {value || "Seleccionar estado"}
-        </Text>
+        <View className="flex-row items-center">
+          <View
+            className="w-6 h-6 rounded-full items-center justify-center mr-2"
+            style={{ backgroundColor: currentOption?.bgColor || "#F8D49A" }}
+          >
+            <Ionicons
+              name={currentOption?.icon ?? "book"}
+              size={14}
+              color={currentOption?.color || "#D97706"}
+            />
+          </View>
+          <Text 
+            className="text-white font-semibold text-base"
+            numberOfLines={1} // Evita que el texto se desborde
+            ellipsizeMode="tail" // Puntos suspensivos si es muy largo
+          >
+            {currentOption?.label || "Mi lista"}
+          </Text>
+          <Ionicons
+            name="chevron-down"
+            size={14}
+            color="#fff"
+            style={{ marginLeft: 4 }}
+          />
+        </View>
       </TouchableOpacity>
 
-      {/* Modal para seleccionar estado */}
+      {/* El resto del modal permanece igual */}
       <Modal
-        animationType="fade"
         transparent
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent
       >
-        <View className="flex-1 justify-center items-center bg-black/50 px-4">
-          <View className="bg-white rounded-3xl  w-full max-w-sm shadow-2xl p-6">
-            {/* Header del modal */}
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-xl font-bold text-primary">
-                Agregar a mi lista
-              </Text>
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                className="p-2 rounded-full hover:bg-gray-100 active:opacity-70"
-              >
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </Pressable>
-            </View>
+        <View className="flex-1 justify-end bg-black/60">
+          <Pressable
+            className="flex-1"
+            onPress={() => setModalVisible(false)}
+          />
 
-      
-            {/* Opciones */}
-            <View className="gap-3">
-              {options.map((option) => (
+          <View
+            className="bg-white rounded-t-3xl shadow-2xl"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 20,
+              elevation: 25,
+            }}
+          >
+            <View className="w-12 h-1.5 bg-gray-300 rounded-full self-center mt-3 mb-4" />
+
+            <View className="px-6 pb-8">
+              <View className="flex-row justify-between items-center mb-6">
+                <View>
+                  <Text className="text-2xl font-bold text-gray-900 mb-1">
+                    Estado de lectura
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    Selecciona el estado actual del libro
+                  </Text>
+                </View>
                 <Pressable
-                  key={option.value}
-                  android_ripple={{ color: "#f0f0f0" }}
-                  className={`flex-row items-center justify-between py-3 px-4 rounded-xl border ${
-                    value === option.label
-                      ? "border-primary bg-primary/10"
-                      : "border-gray-200"
-                  }`}
-                  onPress={() => {
-                    onChange(option.value);
-                    setModalVisible(false);
-                  }}
+                  onPress={() => setModalVisible(false)}
+                  className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
                 >
-                  <View className="flex-row items-center gap-3">
-                    <Ionicons
-                      name={option.icon}
-                      size={20}
-                      color={value === option.label ? "#D97706" : "#6b7280"}
-                    />
-                    <Text
-                      className={`text-base font-medium ${
-                        value === option.label
-                          ? "text-primary font-semibold"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {option.label}
-                    </Text>
-                  </View>
-                  {value === option.label && (
-                    <Ionicons name="checkmark" size={20} color="#D97706" />
-                  )}
+                  <Ionicons name="close" size={20} color="#6B7280" />
                 </Pressable>
-              ))}
+              </View>
+
+              <View className="gap-3">
+                {options.map((option, index) => {
+                  const selected = value === option.value;
+                  return (
+                    <Pressable
+                      key={option.value}
+                      android_ripple={{ color: option.color + "20" }}
+                      className={`flex-row items-center justify-between py-4 px-5 rounded-2xl border-2 ${
+                        selected ? `border-2` : "border-gray-100 bg-gray-50/50"
+                      }`}
+                      style={{
+                        borderColor: selected ? "#D97706" : "#F3F4F6",
+                        backgroundColor: selected ? "#F8D49A" : "#FAFAFA",
+                      }}
+                      onPress={() => {
+                        onChange(option.value);
+                        setModalVisible(false);
+                      }}
+                    >
+                      <View className="flex-row items-center flex-1">
+                        <View
+                          className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
+                          style={{
+                            backgroundColor: selected
+                              ? "#D97706" + "15"
+                              : "#F8D49A",
+                          }}
+                        >
+                          <Ionicons
+                            name={option.icon}
+                            size={24}
+                            color="#D97706"
+                          />
+                        </View>
+
+                        <View className="flex-1">
+                          <Text
+                            className={`text-lg font-semibold ${
+                              selected ? "text-gray-900" : "text-gray-700"
+                            }`}
+                          >
+                            {option.label}
+                          </Text>
+                          <Text className="text-sm text-gray-500 mt-0.5">
+                            {option.value === "reading" &&
+                              "Actualmente leyendo"}
+                            {option.value === "finished" && "Completado"}
+                            {option.value === "abandoned" && "No terminado"}
+                            {option.value === "pending" && "Por leer"}
+                            {option.value === "delete" && "Eliminar de mi lista"}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {selected && (
+                        <View
+                          className="w-6 h-6 rounded-full items-center justify-center"
+                          style={{ backgroundColor: "#D97706" }}
+                        >
+                          <Ionicons name="checkmark" size={14} color="#fff" />
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
           </View>
         </View>

@@ -30,6 +30,17 @@ export default function ProductsLayout() {
         }}
         
       />
+       <Stack.Screen
+        name="[idBook]/watch/index"
+        options={{
+          title: "Volver",
+          headerStyle: {
+            backgroundColor: "#D97706",
+          },
+          headerTintColor: "#fff",
+        }}
+        
+      />
       
       <Stack.Screen
         name="[idBook]/author/[idAuthor]"

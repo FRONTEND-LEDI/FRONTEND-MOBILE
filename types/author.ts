@@ -1,10 +1,10 @@
 export type AuthorType = {
-    _id: string;
-    name: string;
-    biography: string;
-    avatar: {
-      id_image: string;
-      url_secura: string;
-    };
-    bibliography?: string[]; 
+  _id: string;
+  name: string;
+  biography: string;
+  avatar: {
+    id_image: string;
+    url_secura: string;
   };
+  bibliography?: string[];
+};
