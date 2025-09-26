@@ -1,4 +1,5 @@
 import { getBySearch } from "@/app/api/catalogue";
+import { BookType } from "@/types/book";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -14,24 +15,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 export default function Search() {
   const router = useRouter()
-  type Book = {
-    _id: string;
-    title: string;
-    author: string;
-    bookCoverImage: {
-      url_secura: string;
-    };
-    synopsis: string;
-    description?: string;
-    genre?: string;
-    yearBook?: string;
-    theme?: string[];
-    contentBook: {
-      url_secura: string;
-    };
-  };
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<Book[]>([]);
+  const [data, setData] = useState<BookType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -94,7 +80,7 @@ export default function Search() {
       data={data} 
       keyExtractor={(book) => book._id}
       renderItem={({ item }) => (
-        <TouchableOpacity className="flex-row items-center space-x-2 my-2" onPress={()=>router.push(`./(tabs)/catalogue/${item._id}`)}>
+        <TouchableOpacity className="flex-row items-center space-x-2 my-2" onPress={()=>router.push(`../(tabs)/catalogue/${item._id}`)}>
           <Image
             source={{ uri: item.bookCoverImage?.url_secura }}
            
@@ -102,7 +88,7 @@ export default function Search() {
           />
           <View className="mx-2 flex-col items-start">
           <Text className="font-bold font">{item.title}</Text>
-          <Text className="text-sm">{item.author}</Text>
+          <Text className="text-sm">{item.author[0].name}</Text>
           </View>
         </TouchableOpacity>
       )}

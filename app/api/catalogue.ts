@@ -72,6 +72,7 @@ export const getBySearch = async (query: string) => {
     );
 
     const data = await response.json()
+    
 
    
     if (!response.ok) {
