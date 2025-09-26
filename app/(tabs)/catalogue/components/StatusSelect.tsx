@@ -23,14 +23,14 @@ export default function StatusSelect({ value, onChange }: StatusSelectProps) {
 
   const options: StatusOption[] = [
     {
-      label: "Leyendo",
+      label: "En proceso",
       value: "reading",
       icon: "book",
       color: "#D97706",
       bgColor: "#F8D49A",
     },
     {
-      label: "Leído",
+      label: "Finalizado",
       value: "finished",
       icon: "checkmark-done",
       color: "#D97706",

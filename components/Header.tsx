@@ -1,4 +1,4 @@
-import Logo from '@/assets/images/avatar-con-anteojos.png';
+import Logo from '@/assets/images/LOGO.png';
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";

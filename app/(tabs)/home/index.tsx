@@ -1,5 +1,6 @@
 
 import { getBooks } from "@/app/api/catalogue";
+import { booksbyRecomendation, getBookbyLatestProgress } from "@/app/api/recomendations";
 import { authContext } from "@/app/context/authContext";
 import Banner from "@/assets/images/biblioteca.png";
 import Header from "@/components/Header";
@@ -13,6 +14,8 @@ export default function Home() {
   const router = useRouter();
   const { logout, isLogin } = useContext(authContext);
   const [books, setBooks] = useState([]);
+  const [recommendations, setRecomendations] = useState([])
+  const [booksLatest, setBookLatest] = useState([])
 
   useEffect(() => {
     const verificarSesion = async () => {
@@ -40,13 +43,46 @@ export default function Home() {
   
     
   }, [])
+
+  useEffect(() => {
+    const getByRecommendations = async ()=>{
+      const recommendations = await booksbyRecomendation()
+
+      setRecomendations(recommendations)
+    }
+
+    getByRecommendations()
+    
+  },[])
+
+  useEffect(()=>{
+    const getByProgress = async()=>{
+      const bookLatest = await getBookbyLatestProgress()
+
+      setBookLatest(bookLatest)
+
+    }
+
+    getByProgress()
+  },[])
+  
   
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header />
-      <View className="p-4">
+      <View className={`p-4 bg-[url(${Banner})]`}>
         <Image className='w-full h-40 rounded-lg' source={Banner}></Image>
+      </View>
+      <View className="px-4">
+        <Text className="text-semibold text-xl text-primary font-semibold">Te podría interesar</Text>
+  
+        <BookCarousel data={recommendations}/>
+      </View>
+      <View className="px-4">
+        <Text className="text-semibold text-xl text-primary font-semibold">Continua tu progreso</Text>
+  
+        <BookCarousel data={booksLatest}/>
       </View>
       <View className="px-4">
         <Text className="text-semibold text-xl text-primary font-semibold">Antologías</Text>
