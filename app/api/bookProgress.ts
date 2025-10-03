@@ -14,6 +14,7 @@ export const updateBookProgress = async (
 ) => {
   try {
     const token = await SecureStore.getItemAsync("token");
+    console.log(token)
     if (!token) throw new Error("No se encontró el token.");
 
     const requestBody = {
@@ -38,7 +39,7 @@ export const updateBookProgress = async (
     }
 
     const data = await response.json();
-    console.log("Actualización exitosa:", data);
+    
     return data;
   } catch (error) {
     console.error("Error en updateBookProgress:", error);
@@ -161,7 +162,7 @@ export const getBookProgressById = async (idBook: string) => {
     }
 
     const data = await response.json();
-    console.log("Respuesta de get /Progress:", data);
+    
     
     let progressArray = [];
     

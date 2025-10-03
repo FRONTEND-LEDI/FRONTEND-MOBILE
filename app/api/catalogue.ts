@@ -50,9 +50,7 @@ export const getBookById = async (id: string) => {
 
 export const getBySearch = async (query: string) => {
   try {
-    // Leer el token almacenado al iniciar sesión
     const token = await SecureStore.getItemAsync("token");
-    
 
     if (!token) {
       throw new Error("No se encontró el token. Inicia sesión nuevamente.");
@@ -64,27 +62,28 @@ export const getBySearch = async (query: string) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "authorization": `Bearer ${token}`,
+          authorization: `Bearer ${token}`,
         },
-        credentials: "include"
-        
+        credentials: "include",
       }
     );
 
-    const data = await response.json()
-    
-
-   
+    // Verificar antes de parsear
     if (!response.ok) {
+      const text = await response.text();
+      console.error("Respuesta no OK:", response.status, text);
       throw new Error(`Error del servidor: ${response.status}`);
     }
 
-    return data
+    const data = await response.json();
+
+    return data;
   } catch (error) {
     console.error("Error en getBySearch:", error);
     throw error;
   }
 };
+
 
 export const  getBooksByFiltering = async (filters: {
   theme?: string[];
@@ -110,7 +109,9 @@ export const  getBooksByFiltering = async (filters: {
 
     if (!response.ok) throw new Error("Error en la petición");
 
-    return await response.json();
+    const data =  response.json();
+
+    return data
   } catch (error) {
     console.error("Error en getBooksByFiltering:", error);
     return [];

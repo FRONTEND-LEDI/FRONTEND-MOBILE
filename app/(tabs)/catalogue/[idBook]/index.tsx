@@ -107,7 +107,7 @@ export default function BookProps() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-tertiary">
+      <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#FF6B00" />
       </View>
     );
@@ -115,7 +115,7 @@ export default function BookProps() {
 
   if (error || !book) {
     return (
-      <View className="flex-1 justify-center items-center bg-tertiary">
+      <View className="flex-1 justify-center items-center bg-white">
         <Text className="text-red-500 text-lg font-semibold">
           {error || "Producto no encontrado"}
         </Text>
@@ -268,14 +268,14 @@ export default function BookProps() {
         {/* Detalles del libro */}
         <View className="mb-6">
           <View className="flex-row justify-evenly my-9">
-            <View className="mx-8">
-              <Text className="text-gray-800 font-semibold">
+            <View className="mx-8  flex-col justify-center items-center ">
+              <Text className="text-primary text-xl font-bold">
                 {book.genre || "Desconocido"}
               </Text>
               <Text className="text-gray-600 font-normal">Género</Text>
             </View>
-            <View className="mx-8">
-              <Text className="text-gray-800 font-semibold">
+            <View className="mx-8  flex-col justify-center items-center">
+              <Text className="text-primary text-xl font-bold">
                 {book.yearBook?.split("-")[0] || "Desconocido"}
               </Text>
               <Text className="text-gray-600 font-normal">Año</Text>

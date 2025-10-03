@@ -2,7 +2,6 @@ import { createContext } from "react";
 
 export type UserType = {
   id: string;
-
 } | null;
 
 export type AuthContextType = {

@@ -51,6 +51,8 @@ export default function Search() {
     );
   }
 
+  
+
   return (
    
   <SafeAreaView className="flex-1 bg-white m-5">
@@ -71,7 +73,7 @@ export default function Search() {
     {/* Indicador de carga */}
     {isLoading && (
       <View className="mt-4">
-        <ActivityIndicator size="large" color="#5500dc" />
+        <ActivityIndicator size="large" color="#D97706" />
       </View>
     )}
 
@@ -94,7 +96,7 @@ export default function Search() {
       )}
       ListEmptyComponent={
         !isLoading && searchQuery.trim() !== "" ? (
-          <Text className="mt-4 text-center">No se encontraron resultados</Text>
+          <Text className="mt-4 text-center text-secondary">No se encontraron resultados</Text>
         ) : null
       }
     />

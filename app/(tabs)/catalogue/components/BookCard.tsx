@@ -11,26 +11,26 @@ const getIconByFormat = (format?: string) => {
   switch (format) {
     case "ebook":
       return {
-        name: "menu-book" as keyof typeof MaterialIcons.glyphMap,
-        color: "#3B82F6",
+        name: "book" as keyof typeof MaterialIcons.glyphMap,
+        color: "#D97706",
        
       }
     case "audiobook":
       return {
         name: "headphones" as keyof typeof MaterialIcons.glyphMap,
-        color: "#10B981",
+        color: "#D97706",
        
       }
     case "videobook":
       return {
         name: "play-circle-filled" as keyof typeof MaterialIcons.glyphMap,
-        color: "#EF4444",
+        color: "#D97706",
        
       }
     default:
       return {
         name: "description" as keyof typeof MaterialIcons.glyphMap,
-        color: "#6B7280",
+        color: "#D97706",
        
       }
   }
@@ -52,7 +52,7 @@ export default function BookCard({ data, onPress }: BookCardProps) {
           resizeMode="cover"
         />
 
-        <View className={`absolute bottom-1 left-1 bg-secondary/80 rounded-full p-2 shadow-lg `}>
+        <View className={`absolute bottom-1 right-1 bg-secondary/80 rounded-full p-2 shadow-lg `}>
           <MaterialIcons name={iconConfig.name} size={20} color={iconConfig.color} />
         </View>
       </View>

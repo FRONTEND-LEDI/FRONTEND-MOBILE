@@ -23,8 +23,9 @@ export const booksbyRecomendation = async () => {
         
       }
     );
-
+   
     const data = await response.json()
+    
     
     if (!response.ok) {
       throw new Error(`Error del servidor: ${response.status}`);
@@ -32,7 +33,7 @@ export const booksbyRecomendation = async () => {
 
     return data
   } catch (error) {
-    console.error("Error en getBySearch:", error);
+    console.error("Error en getByRecomendations:", error);
     throw error;
   }
 };
@@ -41,13 +42,14 @@ export const getBookbyLatestProgress = async () => {
   try {
     
     const token = await SecureStore.getItemAsync("token");
+    console.log("token de getBookbyLatestProgress", token)
 
     if (!token) {
       throw new Error("No se encontró el token. Inicia sesión nuevamente.");
     }
 
     const response = await fetch(
-      `http://${URI}/bookProgress`,
+      `http://${URI}/booksProgress`,
       {
         method: "GET",
         headers: {
@@ -59,7 +61,11 @@ export const getBookbyLatestProgress = async () => {
       }
     );
 
+   
+
     const data = await response.json()
+
+   
     
     if (!response.ok) {
       throw new Error(`Error del servidor: ${response.status}`);
@@ -67,7 +73,7 @@ export const getBookbyLatestProgress = async () => {
 
     return data
   } catch (error) {
-    console.error("Error en getBySearch:", error);
+    console.error("Error en getByLastProgress:", error);
     throw error;
   }
 };

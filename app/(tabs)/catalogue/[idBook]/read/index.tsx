@@ -285,7 +285,7 @@ export default function ReadBook() {
   // MOSTRAR LOADING hasta que la URI esté lista
   if (isLoading || !uri) {
     return (
-      <View className="flex-1 justify-center items-center">
+      <View className="flex justify-center items-center ">
         <ActivityIndicator size="large" color="#FF6B00" />
       </View>
     );
