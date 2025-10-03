@@ -1,13 +1,12 @@
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
   Image,
   StatusBar,
-  StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
@@ -31,9 +30,49 @@ type User = {
   name: string;
   email: string;
   userName: string;
-  nivel: string;
+  nivel: string; // <-- Campo que contiene la etapa de edad (ej: "Joven Adulto")
   avatar: UserAvatar;
 };
+
+// --- Función para Mapear el Nivel a Estilos (Badge) ---
+type NivelStyle = {
+  className: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+  label: string;
+};
+
+const getNivelStyle = (nivel: string): NivelStyle => {
+  const normalizedNivel = nivel.toLowerCase().trim();
+
+  if (normalizedNivel.includes("joven adulto")) {
+    return {
+      className: "bg-green-100 text-green-800 border-blue-300",
+      iconName: "person",
+      label: "Joven Adulto",
+    };
+  }
+  if (normalizedNivel.includes("adolescente")) {
+    return {
+      className: "bg-purple-100 text-purple-700 border-purple-300",
+      iconName: "color-wand",
+      label: "Adolescente",
+    };
+  }
+  if (normalizedNivel.includes("adulto")) {
+    return {
+      className: "bg-green-100 text-green-700 border-green-300",
+      iconName: "leaf",
+      label: "Adulto Maduro",
+    };
+  }
+  // Valor por defecto
+  return {
+    className: "bg-gray-100 text-gray-700 border-gray-300",
+    iconName: "ellipsis-horizontal-circle",
+    label: "Nivel No Definido",
+  };
+};
+// -----------------------------------------------------
 
 const ProfileScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -60,45 +99,77 @@ const ProfileScreen = () => {
     fetchUser();
   }, []);
 
+  // Determinar el estilo del nivel si el usuario está cargado
+  const nivelStyle = user ? getNivelStyle(user.nivel) : null;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}></View>
-      <View style={styles.profileSectionContainer}>
-        <View style={styles.profileSection}>
+    <SafeAreaView className="flex-1 bg-white">
+      {/* HEADER */}
+      <View className="pt-20 pb-[70px] px-5 rounded-b-3xl border-b border-gray-300 bg-orange-500"></View>
+
+      {/* PROFILE CARD CONTAINER */}
+      <View className="bg-white mx-10 -mt-16 rounded-xl shadow-lg shadow-black/20 p-5 items-center border-8 border-white">
+        {/* PROFILE SECTION */}
+        <View className="items-center py-[30px]">
           {user ? (
             <>
-              <View style={styles.profilePic}>
+              {/* Profile Picture */}
+              <View className="w-[100px] h-[100px] rounded-full bg-[#f8d49a] justify-center items-center mb-2 -mt-[100px] border-8 border-white">
                 <Image
                   className="w-full h-full rounded-full"
                   source={{ uri: user.avatar.avatars.url_secura }}
                 />
               </View>
-              <View style={styles.nameContainer}>
-                <Text style={styles.name}>{user.name}</Text>
+              {/* Name Container */}
+              <View className="flex-row items-center mb-1">
+                <Text className="text-xl font-bold mb-1 text-[#f29200]">
+                  {user.name}
+                </Text>
                 <MaterialIcons name="verified" size={18} color="#4a90e2" />
               </View>
-              <Text style={styles.email}>{user.email}</Text>
+              <Text className="text-base text-gray-600">{user.email}</Text>
+
+              {/* === BADGE DE NIVEL/EDAD (Añadido aquí) === */}
+              {nivelStyle && (
+                <View
+                  className={`flex-row items-center mt-3 px-3 py-1 rounded-full border ${nivelStyle.className}`}
+                >
+                  <Text
+                    className={`ml-2 text-sm font-semibold ${nivelStyle.className
+                      .split(" ")
+                      .find((cls) => cls.startsWith("text-"))}`}
+                  >
+                    {nivelStyle.label}
+                  </Text>
+                </View>
+              )}
+              {/* ========================================= */}
             </>
           ) : (
-            <Text style={styles.email}>Cargando datos...</Text>
+            <Text className="text-base text-gray-600">Cargando datos...</Text>
           )}
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>GENERAL</Text>
+      {/* SETTINGS SECTION */}
+      <View className="p-5">
+        <Text className="text-base font-bold color-tertiary mb-4">GENERAL</Text>
 
-        <View style={styles.sectionItem}>
-          <Text style={styles.itemTitle}>Profile Settings</Text>
-          <Text style={styles.itemSubtitle}>
+        {/* Profile Settings Item */}
+        <View className="mb-5">
+          <Text className="text-lg font-normal text-[#f29200]">
+            Profile Settings
+          </Text>
+          <Text className="text-sm text-gray-600">
             Update and modify your profile
           </Text>
         </View>
 
-        <View style={styles.optionItem}>
-          <View style={styles.optionTextContainer}>
-            <Text style={styles.optionTitle}>Notifications</Text>
-            <Text style={styles.optionSubtitle}>
+        {/* Notifications Option */}
+        <View className="flex-row justify-between items-center py-4 border-b border-gray-200">
+          <View className="flex-1">
+            <Text className="text-base text-[#f29200]">Notifications</Text>
+            <Text className="text-sm text-gray-600">
               Change your notification settings
             </Text>
           </View>
@@ -109,176 +180,27 @@ const ProfileScreen = () => {
             thumbColor={notificationsEnabled ? "#f5dd4b" : "#f4f3f4"}
           />
         </View>
-        <View style={{ marginTop: 30, alignItems: "center" }}></View>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "#fff0ee",
-            paddingVertical: 12,
-            paddingHorizontal: 30,
-            borderRadius: 30,
-            borderWidth: 1,
-            borderColor: "#ff3b30",
-          }}
-        >
+
+        {/* Logout Button Container */}
+        <View className="mt-8 items-center">
           <TouchableOpacity
-            style={styles.logoutText}
+            className="flex-row items-center bg-[#fff0ee] py-3 px-8 rounded-full border border-[#ff3b30]"
             onPress={async () => {
               await SecureStore.deleteItemAsync("token");
               router.replace("/(auth)/signin");
             }}
           >
             <MaterialIcons name="logout" size={24} color="#ff3b30" />
-            <Text>Cerrar Sesión</Text>
+            <Text className="text-base text-[#ff3b30] font-bold ml-2">
+              Cerrar Sesión
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
+
       <StatusBar backgroundColor={colors.primary} animated />
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingTop: 80,
-    paddingBottom: 70,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    borderBottomColor: colors.gray,
-    backgroundColor: colors.primary,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  profileSectionContainer: {
-    backgroundColor: colors.background,
-    marginHorizontal: 40,
-    marginTop: -60,
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-    padding: 20,
-    alignItems: "center",
-    borderWidth: 7,
-    borderColor: colors.background,
-  },
-  profileSection: {
-    alignItems: "center",
-    paddingVertical: 30,
-  },
-  profilePic: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#f8d49a",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-    marginTop: -100,
-    borderWidth: 7,
-    borderColor: colors.background,
-  },
-  nameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#f29200",
-  },
-  email: {
-    fontSize: 16,
-    color: "#666",
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: colors.secondary,
-    marginBottom: 15,
-  },
-  sectionItem: {
-    marginBottom: 20,
-  },
-  itemTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#f29200",
-  },
-  itemSubtitle: {
-    fontSize: 14,
-    color: "#666",
-  },
-  optionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  optionTextContainer: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    color: "#f29200",
-  },
-  optionSubtitle: {
-    fontSize: 14,
-    color: "#666",
-  },
-  checkbox: {
-    marginLeft: 10,
-  },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#fff",
-  },
-  navItem: {
-    alignItems: "center",
-  },
-  activeNavItem: {
-    color: "#4a90e2",
-  },
-  navText: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 5,
-  },
-  logoutText: {
-    fontSize: 16,
-    color: "#ff3b30",
-    fontWeight: "bold",
-    marginLeft: 20,
-  },
-  activeNavText: {
-    color: "#4a90e2",
-  },
-});
 
 export default ProfileScreen;

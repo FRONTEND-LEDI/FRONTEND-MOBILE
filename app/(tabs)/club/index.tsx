@@ -2,8 +2,10 @@ import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 import { useContext, useEffect, useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   ScrollView,
   StatusBar,
@@ -24,136 +26,215 @@ type Foro = {
   description: string;
 };
 
-// Tipo Comentario actualizado para incluir datos de usuario
-type Comentario = {
-  // Asumo que tu base de datos devuelve _id o idComent
-  _id?: string;
-  idComent?: string;
-  idForo: string;
-  idUser: string;
-  // Añadimos los campos que enviaremos para que se guarden
+// --- Interfaces para el nuevo backend poblado ---
+type CommentUser = {
+  _id: string; // ID del usuario
   userName: string;
-  userAvatar?: string;
-  content: string;
+  email: string;
+  // El avatar NO viene aquí, se debe hacer un fetch separado.
 };
+
+type Comentario = {
+  _id: string; // Ya que vienen de MongoDB, se asume que tienen _id
+  idComent?: string; // Mantener por si acaso, pero _id es principal
+  idForo: string;
+  idUser: CommentUser; // Ahora es el objeto poblado
+  content: string;
+  createdAt: string; // Propiedad añadida del log de backend
+};
+// -----------------------------------------------
 
 export default function Forum() {
   const [foros, setForos] = useState<Foro[]>([]);
-  // Almacenamos todos los comentarios brutos que llegan del BE
+  // rawComentarios ahora usará la nueva interfaz
   const [rawComentarios, setRawComentarios] = useState<Comentario[]>([]);
-  // Almacenamos los comentarios que se muestran (filtrados)
   const [displayedComentarios, setDisplayedComentarios] = useState<
     Comentario[]
   >([]);
 
+  // Estado para caché de Avatares: { userId: avatarUrl }
+  const [userAvatars, setUserAvatars] = useState<Record<string, string>>({});
+
   const [selectedForoId, setSelectedForoId] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
-  // Asumo que 'user' contiene 'id' y 'name'
+  // user del contexto de autenticación (contiene ID de usuario)
   const { user } = useContext(authContext);
 
+  // userA: Para tener el perfil completo (incluyendo avatar) del usuario actual
+  const [userA, setUserA] = useState<any | null>(null);
+
   /**
-   * Filtra los comentarios brutos basados en el foro seleccionado.
+   * Obtiene la URL del avatar para un usuario dado.
+   * Si no está en caché, lo trae del backend.
+   * @param userId ID del usuario cuyo avatar se necesita.
    */
+  const fetchUserAvatar = async (userId: string) => {
+    // Si ya lo tenemos en caché, salimos
+    if (userAvatars[userId]) return;
+
+    const token = await SecureStore.getItemAsync("token");
+    if (!token) return;
+
+    try {
+      // **ASUMIMOS** que existe un endpoint dedicado para buscar un usuario por ID.
+      // Si el endpoint '/oneUser' solo devuelve el usuario logueado, necesitas un endpoint como '/oneUserById/:id'
+      const req = await fetch(
+        `http://${IP_ADDRESS}:3402/oneUserById/${userId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const res = await req.json();
+
+      if (res.result && res.result.avatar?.avatars?.url_secura) {
+        setUserAvatars((prev) => ({
+          ...prev,
+          [userId]: res.result.avatar.avatars.url_secura,
+        }));
+      } else {
+        // Establecer un valor para evitar reintentos fallidos
+        setUserAvatars((prev) => ({ ...prev, [userId]: "default" }));
+      }
+    } catch (error) {
+      console.error("Error fetching avatar for user :", userId, error);
+    }
+  };
+
+  // Traer el perfil completo del usuario actual al cargar
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const token = await SecureStore.getItemAsync("token");
+      if (!token) return;
+      try {
+        const userReq = await fetch(`http://${IP_ADDRESS}:3402/oneUser`, {
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${token}`,
+          },
+        });
+        const userRes = await userReq.json();
+        // userA contendrá el avatar del usuario logueado para usarlo en el input de comentario
+        setUserA(userRes.result);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  // FILTRADO DE COMENTARIOS
   useEffect(() => {
     if (selectedForoId) {
-      // Filtrar solo los comentarios que pertenecen al foro seleccionado
-      const filtered = rawComentarios.filter(
-        (c) => c.idForo === selectedForoId
-      );
-      setDisplayedComentarios(filtered.reverse());
+      // Usamos getComentsByForo del backend (nuevo evento)
+      socket.emit("all-public-foro", selectedForoId);
+      // La respuesta llegará en socket.on("coments-in-the-foro") y actualizará rawComentarios
     } else {
-      // Mostrar todos si no hay foro seleccionado
-      setDisplayedComentarios(rawComentarios.reverse());
+      // Si no hay foro seleccionado, mostramos todos
+      setDisplayedComentarios([...rawComentarios].reverse());
     }
-    // Ordenamos por fecha de creación (si _id/idComent es un ObjectId o similar)
-    // El .reverse() inicial asume que la base de datos devuelve el más viejo primero.
+    // NOTA: rawComentarios se actualizará a través de los eventos de socket
   }, [selectedForoId, rawComentarios]);
 
+  // INICIALIZACIÓN Y LISTENERS DE SOCKET.IO
   useEffect(() => {
     socket = io(URL);
     console.log("Pantalla concentrada...");
 
     socket.on("connect", () => {
-      console.log("Connected to Socket.IO server!");
+      console.log("Connected to Socket.IO server!", socket.id);
       socket.emit("get-all-foros");
-      // Al conectarse, pide el historial completo de comentarios
-      socket.emit("all-public");
+      socket.emit("all-public"); // Cargar todos los comentarios inicialmente
     });
 
     socket.on("all-foros", (data: Foro[]) => {
-      console.log("Received foros:", data);
-      setForos(data);
+      const safeData = Array.isArray(data) ? data : [];
+      setForos(safeData);
     });
 
-    // CORREGIDO: Listener para el historial de comentarios (Responde a 'all-public' con evento 'coments')
+    // Listener general para todos los comentarios (usado por "all-public")
     socket.on("coments", (data: Comentario[]) => {
-      console.log(
-        "Recibidos todos los comentarios para filtrado:",
-        data.length
+      const safeData = Array.isArray(data) ? data : [];
+      setRawComentarios(safeData);
+
+      // --- NUEVA LÓGICA DE AVATAR ---
+      // 1. Obtener IDs únicos de los usuarios en los nuevos comentarios
+      const uniqueUserIds = Array.from(
+        new Set(safeData.map((c) => c.idUser._id))
       );
-      // Guardamos la lista completa de comentarios
-      setRawComentarios(data);
+      // 2. Intentar obtener los avatares que faltan
+      uniqueUserIds.forEach((id) => {
+        if (!userAvatars[id] || userAvatars[id] === "default") {
+          fetchUserAvatar(id);
+        }
+      });
+      // -----------------------------
     });
 
-    // CORREGIDO: Listener para nuevos comentarios en tiempo real (Evento emitido por el BE: 'coment-created')
-    socket.on("coment-created", (data: Comentario) => {
-      console.log("Comentario creado en tiempo real: ", data);
+    // NUEVO Listener para comentarios filtrados por foro
+    socket.on("coments-in-the-foro", (data: Comentario[]) => {
+      const safeData = Array.isArray(data) ? data : [];
+      setRawComentarios(safeData);
+      setDisplayedComentarios([...safeData].reverse()); // Mostrar la lista filtrada
 
-      // Añadimos el nuevo comentario a la lista bruta (esto disparará el useEffect de filtrado)
-      setRawComentarios((prevComentarios) => [...prevComentarios, data]);
-
-      // Nota: Dado que el BE tiene un listener duplicado para "new-public",
-      // es posible que este evento se dispare dos veces.
+      // Lógica de avatar para comentarios filtrados
+      const uniqueUserIds = Array.from(
+        new Set(safeData.map((c) => c.idUser._id))
+      );
+      uniqueUserIds.forEach((id) => {
+        if (!userAvatars[id] || userAvatars[id] === "default") {
+          fetchUserAvatar(id);
+        }
+      });
     });
+
+    // Se eliminó socket.on("coment-created") porque el backend ahora emite 'coments' a todos
+    // y eso ya actualiza rawComentarios.
 
     socket.on("error", (error: { msg: string }) => {
       console.error("Socket.IO error:", error.msg);
     });
 
     return () => {
-      // Limpiar todos los listeners
       socket.off("connect");
       socket.off("all-foros");
       socket.off("coments");
-      socket.off("coment-created");
+      socket.off("coments-in-the-foro"); // Desconectar el nuevo listener
       socket.off("error");
       socket.disconnect();
       console.log("Disconnecting socket");
     };
-  }, []); // Dependencia vacía: Solo se ejecuta al montar/desmontar
+  }, []); // Dependencias vacías para ejecución única
 
   const handleTopicPress = (foroId: string) => {
-    // 1. Establece el foro seleccionado para que se active el filtro
     setSelectedForoId(foroId);
-    // 2. Dado que el BE no tiene un endpoint específico para el historial de un foro,
-    // debemos forzar una nueva petición de TODOS los comentarios.
-    // Aunque es ineficiente, es la única manera de actualizar la lista.
-    socket.emit("all-public");
+    // Solicitamos al backend solo los comentarios de ese foro
+    // La respuesta llegará por "coments-in-the-foro"
   };
 
   const handleGetAllComments = () => {
     setSelectedForoId(null);
+    // Solicitamos al backend todos los comentarios
     socket.emit("all-public");
   };
 
   const handleSendComment = () => {
     if (selectedForoId && newComment.trim()) {
-      // **Añadimos la información del usuario que quieres guardar y mostrar**
-      const commentData: Comentario = {
+      const commentData = {
         idForo: selectedForoId,
+        // Mandamos solo el ID, el backend se encarga de poblarlo en la respuesta.
         idUser: user?.id || "anonymous_user",
-        userName: user?.name || "Usuario Anónimo",
-        userAvatar: (user as any)?.avatarUrl || "",
         content: newComment,
       };
-      // Aquí se activa el BE, guarda el comentario y hace io.emit("coment-created", result)
       socket.emit("new-public", commentData);
       setNewComment("");
     }
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-light">
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior="padding">
       <ScrollView
         contentContainerStyle={{
           paddingBottom: 120,
@@ -167,9 +248,13 @@ export default function Forum() {
           showsHorizontalScrollIndicator={false}
           className="px-0 py-1"
         >
-          <TouchableOpacity key="get-all" onPress={handleGetAllComments}>
+          <TouchableOpacity
+            key="get-all"
+            onPress={handleGetAllComments}
+            className={`mr-2 ${!selectedForoId ? "  rounded-xl" : ""}`}
+          >
             <TopicCard
-              title="GETALL"
+              title="Todos"
               color={colors.secondary}
               description="Trae todos"
             />
@@ -179,6 +264,11 @@ export default function Forum() {
             <TouchableOpacity
               key={item._id}
               onPress={() => handleTopicPress(item._id)}
+              className={`mr-2 ${
+                selectedForoId === item._id
+                  ? "border-2 border-orange-500 rounded-xl"
+                  : ""
+              }`}
             >
               <TopicCard
                 title={item.title}
@@ -197,40 +287,70 @@ export default function Forum() {
           {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
         </Text>
 
-        {/* LISTA DE COMENTARIOS FILTRADOS Y ENRIQUECIDOS */}
-        {displayedComentarios.map((comment) => (
-          <View
-            key={comment.idComent || comment._id || Math.random()} // Usamos _id o idComent como clave
-            className="bg-orange-100 p-3 rounded-lg mb-2 border border-orange-200 shadow-sm"
-          >
-            {/* Display de Nombre y Avatar */}
-            <View className="flex-row items-center mb-1">
-              {/* Placeholder de Avatar */}
-              <View className="w-6 h-6 rounded-full bg-orange-500 items-center justify-center mr-2">
-                <Text className="text-xs text-white font-bold">
-                  {comment.userName ? comment.userName[0].toUpperCase() : "U"}
+        {/* LISTA DE COMENTARIOS FILTRADOS*/}
+        {displayedComentarios.map((comment) => {
+          const userId = comment.idUser._id;
+          const userName = comment.idUser.userName || "Usuario Desconocido";
+          const avatarUrl = userAvatars[userId];
+
+          return (
+            <View
+              key={comment._id || Math.random()}
+              className="bg-orange-100 p-3 rounded-xl mb-3 border border-orange-200 shadow-sm"
+            >
+              {/* Display de Nombre y Avatar */}
+              <View className="flex-row items-center mb-1">
+                {/* Avatar Dinámico */}
+                <View className="w-8 h-8 rounded-full bg-orange-300 items-center justify-center mr-3 overflow-hidden">
+                  {avatarUrl && avatarUrl !== "default" ? (
+                    <Image
+                      className="w-full h-full rounded-full"
+                      source={{ uri: avatarUrl }}
+                    />
+                  ) : (
+                    // Placeholder si el avatar no está cargado o no existe
+                    <Ionicons
+                      name="person-circle"
+                      size={32}
+                      color={colors.primary}
+                    />
+                  )}
+                </View>
+                {/* Nombre del Usuario */}
+                <Text className="text-base font-semibold text-orange-800">
+                  {userName}
                 </Text>
+                {/* Opcional: Mostrar el foro al que pertenece si es "Todos" */}
+                {!selectedForoId && (
+                  <Text className="text-xs text-gray-500 ml-2">
+                    en{" "}
+                    {foros.find((f) => f._id === comment.idForo)?.title ||
+                      "un Foro"}
+                  </Text>
+                )}
               </View>
-              {/* Nombre del Usuario */}
-              <Text className="text-sm font-semibold text-orange-800">
-                {comment.userName || "Usuario Desconocido"}
+              {/* Contenido del comentario */}
+              <Text className="text-base text-gray-800 ml-11 mt-1">
+                {comment.content}
+              </Text>
+              <Text className="text-xs text-gray-400 text-right mt-1">
+                {new Date(comment.createdAt).toLocaleTimeString()}
               </Text>
             </View>
-            {/* Contenido del comentario */}
-            <Text className="text-base text-gray-800 ml-8">
-              {comment.content}
-            </Text>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
 
       {/* Input de Comentario */}
       {selectedForoId ? (
-        <View className="p-4">
+        <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
           <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
             <TextInput
               className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
-              placeholder="Escribe tu comentario..."
+              placeholder={`Comentar en: ${
+                foros.find((f) => f._id === selectedForoId)?.title ||
+                "Foro Seleccionado"
+              }...`}
               placeholderTextColor="#9ca3af"
               value={newComment}
               onChangeText={setNewComment}
