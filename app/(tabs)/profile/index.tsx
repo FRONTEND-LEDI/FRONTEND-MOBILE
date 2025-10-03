@@ -99,13 +99,12 @@ const ProfileScreen = () => {
     fetchUser();
   }, []);
 
-  // Determinar el estilo del nivel si el usuario está cargado
   const nivelStyle = user ? getNivelStyle(user.nivel) : null;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* HEADER */}
-      <View className="pt-20 pb-[70px] px-5 rounded-b-3xl border-b border-gray-300 bg-orange-500"></View>
+      <View className="pt-20 pb-[70px] px-5 rounded-b-3xl  bg-[#D97706]"></View>
 
       {/* PROFILE CARD CONTAINER */}
       <View className="bg-white mx-10 -mt-16 rounded-xl shadow-lg shadow-black/20 p-5 items-center border-8 border-white">

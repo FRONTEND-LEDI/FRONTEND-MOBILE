@@ -76,17 +76,12 @@ export default function Forum() {
     if (!token) return;
 
     try {
-      // **ASUMIMOS** que existe un endpoint dedicado para buscar un usuario por ID.
-      // Si el endpoint '/oneUser' solo devuelve el usuario logueado, necesitas un endpoint como '/oneUserById/:id'
-      const req = await fetch(
-        `http://${IP_ADDRESS}:3402/oneUserById/${userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const req = await fetch(`http://${IP_ADDRESS}:3402/oneUser/${userId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+      });
       const res = await req.json();
 
       if (res.result && res.result.avatar?.avatars?.url_secura) {
@@ -254,7 +249,7 @@ export default function Forum() {
             className={`mr-2 ${!selectedForoId ? "  rounded-xl" : ""}`}
           >
             <TopicCard
-              title="Todos"
+              title="General"
               color={colors.secondary}
               description="Trae todos"
             />
@@ -265,9 +260,7 @@ export default function Forum() {
               key={item._id}
               onPress={() => handleTopicPress(item._id)}
               className={`mr-2 ${
-                selectedForoId === item._id
-                  ? "border-2 border-orange-500 rounded-xl"
-                  : ""
+                selectedForoId === item._id ? " rounded-xl" : ""
               }`}
             >
               <TopicCard
@@ -311,7 +304,7 @@ export default function Forum() {
                     // Placeholder si el avatar no está cargado o no existe
                     <Ionicons
                       name="person-circle"
-                      size={32}
+                      size={30}
                       color={colors.primary}
                     />
                   )}
