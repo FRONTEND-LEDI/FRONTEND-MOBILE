@@ -7,7 +7,7 @@ import {
 } from "@/app/api/bookProgress";
 import { getBookById } from "@/app/api/catalogue";
 import { AuthorType } from "@/types/author";
-import { BookType } from "@/types/book";
+import { BookType, format } from "@/types/book";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import StatusSelect from "../components/StatusSelect";
+
 
 export default function BookProps() {
   const router = useRouter();
@@ -41,6 +42,8 @@ export default function BookProps() {
         try {
           const data = await getBookById(idBook as string);
           setBook(data);
+
+          console.log("datos del libro", data);
 
           const progress = await getBookProgressById(idBook as string);
           if (progress) {
@@ -160,7 +163,7 @@ export default function BookProps() {
               className="w-7 h-7 rounded-full mr-2"
             />
             <Text className="text-base text-gray-600 font-medium">
-              {book.author[0].name}
+              {book.author[0].fullName}
             </Text>
           </TouchableOpacity>
         </View>
@@ -168,7 +171,7 @@ export default function BookProps() {
         <View className="flex-row justify-center items-center gap-4 mb-6">
           {/* Botón  Escuchar */}
 
-          {book.format === "ebook" && (
+          {book.format === format.BOOK && (
             <TouchableOpacity
               className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
               style={{
@@ -194,7 +197,7 @@ export default function BookProps() {
               </Text>
             </TouchableOpacity>
           )}
-          {book.format === "audiobook" && (
+          {book.format === format.AUDIO && (
             <TouchableOpacity
               className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
               style={{
@@ -220,7 +223,7 @@ export default function BookProps() {
               </Text>
             </TouchableOpacity>
           )}
-          {book.format === "videobook" && (
+          {book.format === format.VIDEO && (
             <TouchableOpacity
               className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
               style={{
@@ -300,3 +303,4 @@ export default function BookProps() {
     </SafeAreaView>
   );
 }
+  
