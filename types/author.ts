@@ -1,6 +1,6 @@
 export type AuthorType = {
   _id: string;
-  name: string;
+  fullName: string;
   biography: string;
   avatar: {
     id_image: string;

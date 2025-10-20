@@ -1,9 +1,15 @@
+export enum format {
+  BOOK = "ebook",
+  AUDIO = "audiobook",
+  VIDEO= "videobook",
+}
+
 export interface BookType {
   _id: string;
   title: string;
   author: [{ 
     _id:string
-    name:string
+    fullName:string
   }];
   bookCoverImage?: { url_secura?: string };
   summary?: string;
@@ -17,6 +23,6 @@ export interface BookType {
   duration?: number;
   genre?: string;
   level?: string;
-  format?: "ebook" | "audiobook" | "videobook";
+  format?: format;
   fileExtension: string;
 }

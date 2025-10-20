@@ -43,7 +43,7 @@ export default function Author() {
             className="w-40 h-40 rounded-full border-4 border-primary shadow-lg"
           />
           <Text className="font-bold text-center text-3xl mt-4 text-gray-800">
-            {author?.name}
+            {author?.fullName } 
           </Text>
         </View>
 
