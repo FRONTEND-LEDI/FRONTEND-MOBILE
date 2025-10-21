@@ -2,16 +2,16 @@ import ButtonTheme from "@/app/(tabs)/catalogue/components/ButtonTheme";
 import { getAuthorById } from "@/app/api/author";
 import {
   deleteBookProgress,
-  getUserProgress,
+  getBookProgressById,
   postSaveProgress,
-  updateBookProgress,
 } from "@/app/api/bookProgress";
 import { getBookById } from "@/app/api/catalogue";
-import { authContext } from "@/app/context/authContext";
 import { AuthorType } from "@/types/author";
-import { BookType } from "@/types/book";
+import { BookType, format } from "@/types/book";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -28,15 +28,12 @@ export default function BookProps() {
   const router = useRouter();
   const { idBook } = useLocalSearchParams();
   const { width } = Dimensions.get("window");
+  const [status, setStatus] = useState<string>("");
 
   const [book, setBook] = useState<BookType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [author, setAuthor] = useState<AuthorType | null>(null);
-  const [status, setStatus] = useState<string>("Mi lista");
-  const { user } = useContext(authContext);
-
-  // ! Traer los datos del libro
   useFocusEffect(
     useCallback(() => {
       const fetchBook = async () => {
@@ -44,11 +41,11 @@ export default function BookProps() {
           const data = await getBookById(idBook as string);
           setBook(data);
 
-          const progress = await getUserProgress();
-          if (progress?.status) {
+          console.log("datos del libro", data);
+
+          const progress = await getBookProgressById(idBook as string);
+          if (progress) {
             setStatus(progress.status);
-          } else {
-            setStatus("unmarked");
           }
         } catch (err) {
           console.error("Error al obtener el libro:", err);
@@ -61,7 +58,6 @@ export default function BookProps() {
     }, [idBook])
   );
 
-  // ! Traer el autor
   useEffect(() => {
     const getAuthor = async () => {
       if (!book) return;
@@ -79,32 +75,29 @@ export default function BookProps() {
     }
   }, [book]);
 
-  // ! Manejar el progreso del libro
   const handleStatusChange = async (newStatus: string) => {
-    if (!book) return;
     try {
-      if (newStatus === "unmarked") {
-        await deleteBookProgress(book._id);
-        setStatus("unmarked");
-        return;
-      }
-
-      if (status === "unmarked") {
-        await postSaveProgress(
-          { idBook: book._id, status: newStatus },
-          user?.id as string
-        );
+      if (newStatus === "delete") {
+        await deleteBookProgress(idBook as string);
+        setStatus("");
       } else {
-        await updateBookProgress(book._id, newStatus);
+        setStatus(newStatus);
+        await postSaveProgress({
+          idBook: idBook as string,
+          status: newStatus,
+          position: 0,
+          percent: 0,
+          total: 0,
+          unit: "pages",
+        });
       }
 
-      setStatus(newStatus);
+      console.log("Progreso actualizado correctamente", newStatus);
     } catch (error) {
-      console.error("Error al actualizar progreso:", error);
+      console.error("Error guardando progreso:", error);
     }
   };
 
-  // ! Reset al desmontar
   useEffect(() => {
     return () => {
       setBook(null);
@@ -115,7 +108,7 @@ export default function BookProps() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-tertiary">
+      <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#FF6B00" />
       </View>
     );
@@ -123,7 +116,7 @@ export default function BookProps() {
 
   if (error || !book) {
     return (
-      <View className="flex-1 justify-center items-center bg-tertiary">
+      <View className="flex-1 justify-center items-center bg-white">
         <Text className="text-red-500 text-lg font-semibold">
           {error || "Producto no encontrado"}
         </Text>
@@ -144,7 +137,7 @@ export default function BookProps() {
         {/* Portada del libro */}
         <View className="items-center mt-6 mb-4 shadow-lg">
           <Image
-            source={{ uri: book.bookCoverImage.url_secura }}
+            source={{ uri: book.bookCoverImage?.url_secura }}
             style={{
               width: width * 0.5,
               height: width * 0.7,
@@ -170,25 +163,111 @@ export default function BookProps() {
               className="w-7 h-7 rounded-full mr-2"
             />
             <Text className="text-base text-gray-600 font-medium">
-              {book.author[0].name}
+              {book.author[0].fullName}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Botones de acción */}
-        <View className="flex-row justify-center gap-4 mb-6">
-          <TouchableOpacity
-            className="bg-primary px-8 py-3 rounded-full shadow-md"
-            onPress={() =>
-              router.push({
-                pathname: `./${idBook}/read`,
-                params: { idBook },
-              })
-            }
-          >
-            <Text className="text-white font-semibold text-base">Leer</Text>
-          </TouchableOpacity>
-          <StatusSelect value={status} onChange={handleStatusChange} />
+        <View className="flex-row justify-center items-center gap-4 mb-6">
+          {/* Botón  Escuchar */}
+
+          {book.format === format.BOOK && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+              style={{
+                backgroundColor: "#D97706",
+                shadowColor: "#D97706",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+                minWidth: 150, // Mismo ancho mínimo
+                maxWidth: 150, // Mismo ancho máximo
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: `./${idBook}/read`,
+                  params: { idBook },
+                })
+              }
+            >
+              <Ionicons name="book" size={16} color="#F8D49A" />
+              <Text className="text-white font-semibold text-base ml-2">
+                Leer
+              </Text>
+            </TouchableOpacity>
+          )}
+          {book.format === format.AUDIO && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+              style={{
+                backgroundColor: "#D97706",
+                shadowColor: "#D97706",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+                minWidth: 150, // Mismo ancho mínimo
+                maxWidth: 150, // Mismo ancho máximo
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: `./${idBook}/watch`,
+                  params: {
+                    mediaSource: book.contentBook?.url_secura,
+                    idBook: book.contentBook?.url_secura,
+                  },
+                })
+              }
+            >
+              <MaterialIcons
+                name="multitrack-audio"
+                size={16}
+                color="#F8D49A"
+              />
+              <Text className="text-white font-semibold text-base ml-2">
+                Escuchar
+              </Text>
+            </TouchableOpacity>
+          )}
+          {book.format === format.VIDEO && (
+            <TouchableOpacity
+              className="flex-row items-center justify-center px-6 py-4 rounded-full shadow-lg"
+              style={{
+                backgroundColor: "#D97706",
+                shadowColor: "#D97706",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+                minWidth: 150, // Mismo ancho mínimo
+                maxWidth: 150, // Mismo ancho máximo
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: `./${idBook}/watch`,
+                  params: {
+                    mediaSource: book.contentBook?.url_secura,
+                    idBook: book.contentBook?.url_secura,
+                  },
+                })
+              }
+            >
+              <MaterialIcons
+                name="video-collection"
+                size={16}
+                color="#F8D49A"
+              />
+              <Text className="text-white font-semibold text-base ml-2">
+                Ver video
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Status select */}
+          <View style={{ minWidth: 150, maxWidth: 150 }}>
+            <StatusSelect value={status} onChange={handleStatusChange} />
+          </View>
         </View>
 
         {/* Sinopsis */}
@@ -204,14 +283,14 @@ export default function BookProps() {
         {/* Detalles del libro */}
         <View className="mb-6">
           <View className="flex-row justify-evenly my-9">
-            <View className="mx-8">
-              <Text className="text-gray-800 font-semibold">
+            <View className="mx-8  flex-col justify-center items-center ">
+              <Text className="text-primary text-xl font-bold">
                 {book.genre || "Desconocido"}
               </Text>
               <Text className="text-gray-600 font-normal">Género</Text>
             </View>
-            <View className="mx-8">
-              <Text className="text-gray-800 font-semibold">
+            <View className="mx-8  flex-col justify-center items-center">
+              <Text className="text-primary text-xl font-bold">
                 {book.yearBook?.split("-")[0] || "Desconocido"}
               </Text>
               <Text className="text-gray-600 font-normal">Año</Text>
