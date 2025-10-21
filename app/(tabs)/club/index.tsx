@@ -1,11 +1,10 @@
+import { getForosApi } from "@/app/api/club";
 import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { Ionicons } from "@expo/vector-icons";
-import * as SecureStore from "expo-secure-store";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   ScrollView,
   StatusBar,
@@ -15,216 +14,149 @@ import {
   View,
 } from "react-native";
 import { io, Socket } from "socket.io-client";
-import TopicCard from "../../../components/club/TopicCard";
+import ForoTopics from "../../../components/ForoButton";
 
 const URL = `http://${IP_ADDRESS}:3402`;
-let socket: Socket;
 
 type Foro = {
   _id: string;
   title: string;
   description: string;
 };
-
-// --- Interfaces para el nuevo backend poblado ---
 type CommentUser = {
-  _id: string; // ID del usuario
-  userName: string;
-  email: string;
-  // El avatar NO viene aquí, se debe hacer un fetch separado.
+  _id: string;
+  userName?: string;
 };
 
 type Comentario = {
-  _id: string; // Ya que vienen de MongoDB, se asume que tienen _id
-  idComent?: string; // Mantener por si acaso, pero _id es principal
+  _id: string;
+  idComent?: string;
   idForo: string;
-  idUser: CommentUser; // Ahora es el objeto poblado
+  idUser: string | CommentUser;
   content: string;
-  createdAt: string; // Propiedad añadida del log de backend
+  createdAt?: string;
 };
-// -----------------------------------------------
 
 export default function Forum() {
   const [foros, setForos] = useState<Foro[]>([]);
-  // rawComentarios ahora usará la nueva interfaz
-  const [rawComentarios, setRawComentarios] = useState<Comentario[]>([]);
   const [displayedComentarios, setDisplayedComentarios] = useState<
     Comentario[]
   >([]);
 
-  // Estado para caché de Avatares: { userId: avatarUrl }
-  const [userAvatars, setUserAvatars] = useState<Record<string, string>>({});
-
   const [selectedForoId, setSelectedForoId] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
-  // user del contexto de autenticación (contiene ID de usuario)
   const { user } = useContext(authContext);
+  const socketRef = useRef<Socket | null>(null);
 
-  // userA: Para tener el perfil completo (incluyendo avatar) del usuario actual
-  const [userA, setUserA] = useState<any | null>(null);
-
-  /**
-   * Obtiene la URL del avatar para un usuario dado.
-   * Si no está en caché, lo trae del backend.
-   * @param userId ID del usuario cuyo avatar se necesita.
-   */
-  const fetchUserAvatar = async (userId: string) => {
-    // Si ya lo tenemos en caché, salimos
-    if (userAvatars[userId]) return;
-
-    const token = await SecureStore.getItemAsync("token");
-    if (!token) return;
-
-    try {
-      const req = await fetch(`http://${IP_ADDRESS}:3402/oneUser/${userId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-      });
-      const res = await req.json();
-
-      if (res.result && res.result.avatar?.avatars?.url_secura) {
-        setUserAvatars((prev) => ({
-          ...prev,
-          [userId]: res.result.avatar.avatars.url_secura,
-        }));
-      } else {
-        // Establecer un valor para evitar reintentos fallidos
-        setUserAvatars((prev) => ({ ...prev, [userId]: "default" }));
-      }
-    } catch (error) {
-      console.error("Error fetching avatar for user :", userId, error);
+  const fetchComments = useCallback((foroId: string | null) => {
+    const currentSocket = socketRef.current;
+    if (!currentSocket || !currentSocket.connected) {
+      console.log("Socket no conectado no se puede solicitar comentarios");
+      return;
     }
-  };
-
-  // Traer el perfil completo del usuario actual al cargar
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      const token = await SecureStore.getItemAsync("token");
-      if (!token) return;
-      try {
-        const userReq = await fetch(`http://${IP_ADDRESS}:3402/oneUser`, {
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
-          },
-        });
-        const userRes = await userReq.json();
-        // userA contendrá el avatar del usuario logueado para usarlo en el input de comentario
-        setUserA(userRes.result);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
+    if (foroId) {
+      console.log("Pidiendo comentarios para foro: ", foroId);
+      // solicitar los comentarios del foro
+      currentSocket.emit("all-public-foro", foroId);
+    } else {
+      console.log("Pidiendo todos los comentarios");
+      currentSocket.emit("all-public");
+    }
   }, []);
 
-  // FILTRADO DE COMENTARIOS
   useEffect(() => {
-    if (selectedForoId) {
-      // Usamos getComentsByForo del backend (nuevo evento)
-      socket.emit("all-public-foro", selectedForoId);
-      // La respuesta llegará en socket.on("coments-in-the-foro") y actualizará rawComentarios
-    } else {
-      // Si no hay foro seleccionado, mostramos todos
-      setDisplayedComentarios([...rawComentarios].reverse());
-    }
-    // NOTA: rawComentarios se actualizará a través de los eventos de socket
-  }, [selectedForoId, rawComentarios]);
-
-  // INICIALIZACIÓN Y LISTENERS DE SOCKET.IO
-  useEffect(() => {
-    socket = io(URL);
+    const currentSocket = io(URL);
+    socketRef.current = currentSocket;
     console.log("Pantalla concentrada...");
 
-    socket.on("connect", () => {
-      console.log("Connected to Socket.IO server!", socket.id);
-      socket.emit("get-all-foros");
-      socket.emit("all-public"); // Cargar todos los comentarios inicialmente
+    const loadForos = async () => {
+      const data = await getForosApi();
+      setForos(data);
+    };
+    loadForos();
+    currentSocket.on("connect", () => {
+      console.log("Connected to Socket.IO server!", currentSocket.id);
+      currentSocket.emit("get-all-foros");
+      fetchComments(null);
     });
 
-    socket.on("all-foros", (data: Foro[]) => {
+    currentSocket.on("coments", (data: Comentario[]) => {
       const safeData = Array.isArray(data) ? data : [];
-      setForos(safeData);
+      if (!selectedForoId) {
+        setDisplayedComentarios([...safeData].reverse());
+      }
     });
 
-    // Listener general para todos los comentarios (usado por "all-public")
-    socket.on("coments", (data: Comentario[]) => {
+    currentSocket.on("coments-in-the-foro", (data: Comentario[]) => {
       const safeData = Array.isArray(data) ? data : [];
-      setRawComentarios(safeData);
-
-      // --- NUEVA LÓGICA DE AVATAR ---
-      // 1. Obtener IDs únicos de los usuarios en los nuevos comentarios
-      const uniqueUserIds = Array.from(
-        new Set(safeData.map((c) => c.idUser._id))
-      );
-      // 2. Intentar obtener los avatares que faltan
-      uniqueUserIds.forEach((id) => {
-        if (!userAvatars[id] || userAvatars[id] === "default") {
-          fetchUserAvatar(id);
-        }
-      });
-      // -----------------------------
+      console.log(safeData.length);
+      setDisplayedComentarios([...safeData].reverse());
     });
 
-    // NUEVO Listener para comentarios filtrados por foro
-    socket.on("coments-in-the-foro", (data: Comentario[]) => {
-      const safeData = Array.isArray(data) ? data : [];
-      setRawComentarios(safeData);
-      setDisplayedComentarios([...safeData].reverse()); // Mostrar la lista filtrada
+    currentSocket.on("coment-created", (newComment: Comentario) => {
+      const targetId =
+        typeof newComment.idUser === "string"
+          ? newComment.idForo
+          : newComment.idForo;
 
-      // Lógica de avatar para comentarios filtrados
-      const uniqueUserIds = Array.from(
-        new Set(safeData.map((c) => c.idUser._id))
-      );
-      uniqueUserIds.forEach((id) => {
-        if (!userAvatars[id] || userAvatars[id] === "default") {
-          fetchUserAvatar(id);
-        }
-      });
+      if (!selectedForoId || selectedForoId === targetId) {
+        setDisplayedComentarios((prev) => [newComment, ...prev]);
+      }
     });
 
-    // Se eliminó socket.on("coment-created") porque el backend ahora emite 'coments' a todos
-    // y eso ya actualiza rawComentarios.
-
-    socket.on("error", (error: { msg: string }) => {
+    currentSocket.on("error", (error: { msg: string }) => {
       console.error("Socket.IO error:", error.msg);
     });
 
     return () => {
-      socket.off("connect");
-      socket.off("all-foros");
-      socket.off("coments");
-      socket.off("coments-in-the-foro"); // Desconectar el nuevo listener
-      socket.off("error");
-      socket.disconnect();
+      currentSocket.off("connect");
+      currentSocket.off("coments");
+      currentSocket.off("coments-in-the-foro");
+      currentSocket.off("coment-created");
+      currentSocket.off("error");
+      currentSocket.disconnect();
+      socketRef.current = null;
       console.log("Disconnecting socket");
     };
-  }, []); // Dependencias vacías para ejecución única
+  }, []);
 
   const handleTopicPress = (foroId: string) => {
+    console.log("handleTopicPress called with:", foroId);
     setSelectedForoId(foroId);
-    // Solicitamos al backend solo los comentarios de ese foro
-    // La respuesta llegará por "coments-in-the-foro"
+    fetchComments(foroId);
   };
 
+  useEffect(() => {
+    console.log("selectedForoId changed:", selectedForoId);
+  }, [selectedForoId]);
+
   const handleGetAllComments = () => {
-    setSelectedForoId(null);
-    // Solicitamos al backend todos los comentarios
-    socket.emit("all-public");
+    try {
+      setSelectedForoId(null);
+      fetchComments(null);
+    } catch (error) {
+      console.log("Error al traer todos los comentarios", error);
+    }
   };
 
   const handleSendComment = () => {
-    if (selectedForoId && newComment.trim()) {
-      const commentData = {
-        idForo: selectedForoId,
-        // Mandamos solo el ID, el backend se encarga de poblarlo en la respuesta.
-        idUser: user?.id || "anonymous_user",
-        content: newComment,
-      };
-      socket.emit("new-public", commentData);
-      setNewComment("");
+    try {
+      const currentSocket = socketRef.current;
+      if (!currentSocket || !currentSocket.connected) {
+        console.warn("Socket no conectado, no se pudo enviar el comentario.");
+        return;
+      }
+      if (selectedForoId && newComment.trim()) {
+        const commentData = {
+          idForo: selectedForoId,
+          idUser: user?.id || "anonymous_user",
+          content: newComment,
+        };
+        currentSocket.emit("new-public", commentData);
+        setNewComment("");
+      }
+    } catch (error) {
+      console.log("Error al enviar Comentario", error);
     }
   };
 
@@ -238,40 +170,12 @@ export default function Forum() {
         }}
         className="flex-1 px-6"
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="px-0 py-1"
-        >
-          <TouchableOpacity
-            key="get-all"
-            onPress={handleGetAllComments}
-            className={`mr-2 ${!selectedForoId ? "  rounded-xl" : ""}`}
-          >
-            <TopicCard
-              title="General"
-              color={colors.secondary}
-              description="Trae todos"
-            />
-          </TouchableOpacity>
-
-          {foros.map((item) => (
-            <TouchableOpacity
-              key={item._id}
-              onPress={() => handleTopicPress(item._id)}
-              className={`mr-2 ${
-                selectedForoId === item._id ? " rounded-xl" : ""
-              }`}
-            >
-              <TopicCard
-                title={item.title}
-                posts={0}
-                color="#f29200"
-                description={item.description}
-              />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <ForoTopics
+          foros={foros}
+          selectedForoId={selectedForoId}
+          onTopicPress={handleTopicPress}
+          onGetAllComments={handleGetAllComments}
+        />
         {/* Titulo de los comentarios */}
         <Text
           className="text-xl font-bold mt-5 mb-3"
@@ -282,38 +186,29 @@ export default function Forum() {
 
         {/* LISTA DE COMENTARIOS FILTRADOS*/}
         {displayedComentarios.map((comment) => {
-          const userId = comment.idUser._id;
-          const userName = comment.idUser.userName || "Usuario Desconocido";
-          const avatarUrl = userAvatars[userId];
+          let userName: string;
 
+          if (typeof comment.idUser === "string") {
+            userName = "Usuario Desconocido";
+          } else {
+            userName = comment.idUser.userName || "Usuario";
+          }
           return (
             <View
+              // Usamos el ID del comentario, si no existe (raro), usamos un random
               key={comment._id || Math.random()}
               className="bg-orange-100 p-3 rounded-xl mb-3 border border-orange-200 shadow-sm"
             >
-              {/* Display de Nombre y Avatar */}
+              {/* Display de Nombre y Avatar (inicial) */}
               <View className="flex-row items-center mb-1">
-                {/* Avatar Dinámico */}
-                <View className="w-8 h-8 rounded-full bg-orange-300 items-center justify-center mr-3 overflow-hidden">
-                  {avatarUrl && avatarUrl !== "default" ? (
-                    <Image
-                      className="w-full h-full rounded-full"
-                      source={{ uri: avatarUrl }}
-                    />
-                  ) : (
-                    // Placeholder si el avatar no está cargado o no existe
-                    <Ionicons
-                      name="person-circle"
-                      size={30}
-                      color={colors.primary}
-                    />
-                  )}
+                <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
+                  <Text className="text-sm font-bold text-white">
+                    {userName.charAt(0).toUpperCase()}
+                  </Text>
                 </View>
-                {/* Nombre del Usuario */}
                 <Text className="text-base font-semibold text-orange-800">
                   {userName}
                 </Text>
-                {/* Opcional: Mostrar el foro al que pertenece si es "Todos" */}
                 {!selectedForoId && (
                   <Text className="text-xs text-gray-500 ml-2">
                     en{" "}
@@ -322,16 +217,29 @@ export default function Forum() {
                   </Text>
                 )}
               </View>
-              {/* Contenido del comentario */}
               <Text className="text-base text-gray-800 ml-11 mt-1">
                 {comment.content}
               </Text>
               <Text className="text-xs text-gray-400 text-right mt-1">
-                {new Date(comment.createdAt).toLocaleTimeString()}
+                {comment.createdAt
+                  ? new Date(comment.createdAt).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : ""}
               </Text>
             </View>
           );
         })}
+
+        {/* Mensaje si no hay comentarios */}
+        {displayedComentarios.length === 0 && (
+          <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
+            <Text className="text-base text-gray-500 font-medium">
+              No hay comentarios en este tema. ¡Sé el primero en escribir!
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* Input de Comentario */}
@@ -356,7 +264,7 @@ export default function Forum() {
               onPress={handleSendComment}
               disabled={!newComment.trim()}
             >
-              <Ionicons name="send" size={20} color="white" />
+              <Ionicons name="arrow-up" size={20} color="white" />
             </TouchableOpacity>
           </View>
         </View>
