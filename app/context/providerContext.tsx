@@ -17,7 +17,7 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
           return;
         }
 
-        const res = await fetch(`http://${URI}/getUser`, {
+        const res = await fetch(`http://${URI}/oneUser`, {
           headers: {
             "Content-Type": "application/json",
             "authorization": `Bearer ${token}`,
@@ -43,6 +43,8 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     getData();
   }, []);
+
+  
 
   const logout = async () => {
     await SecureStore.deleteItemAsync("token");

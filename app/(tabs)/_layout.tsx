@@ -31,20 +31,23 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-  name="chat/index"
-  options={{
-    title: "",
-    tabBarIcon: ({ color, size }) => (
-      <Image 
-        source={chatLogo} 
-        style={{ 
-          width: size * 1.5, // 50% más grande
-          height: size * 1.5, // 50% más grande
-        }} 
+        name="chat/index"
+        options={{
+          
+          title: "",
+        
+          
+          tabBarIcon: ({ color, size }) => (
+            <Image
+              source={chatLogo}
+              style={{
+                width: size * 1.5, // 50% más grande
+                height: size * 1.5, // 50% más grande
+              }}
+            />
+          ),
+        }}
       />
-    )
-  }}
-/>
       <Tabs.Screen
         name="club/index"
         options={{
