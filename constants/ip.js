@@ -1,2 +1,4 @@
-export const URI = "10.254.198.101:3402"; 
-export const URI_VISOR = "10.254.198.101:5173"
+import { IP_ADDRESS } from "@/constants/configEnv";
+
+export const URI = `${IP_ADDRESS}:3402`;
+export const URI_VISOR = `${IP_ADDRESS}:5173`;

@@ -24,7 +24,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import StatusSelect from "../components/StatusSelect";
 
-
 export default function BookProps() {
   const router = useRouter();
   const { idBook } = useLocalSearchParams();
@@ -35,7 +34,6 @@ export default function BookProps() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [author, setAuthor] = useState<AuthorType | null>(null);
-
   useFocusEffect(
     useCallback(() => {
       const fetchBook = async () => {
@@ -156,7 +154,9 @@ export default function BookProps() {
           </Text>
           <TouchableOpacity
             className="flex-row items-center"
-            onPress={() => router.push(`./${idBook}/author/${book.author[0]._id}`)}
+            onPress={() =>
+              router.push(`./${idBook}/author/${book.author[0]._id}`)
+            }
           >
             <Image
               source={{ uri: author?.avatar.url_secura }}
@@ -213,11 +213,18 @@ export default function BookProps() {
               onPress={() =>
                 router.push({
                   pathname: `./${idBook}/watch`,
-                  params: { mediaSource: book.contentBook?.url_secura, idBook : book.contentBook?.url_secura },
+                  params: {
+                    mediaSource: book.contentBook?.url_secura,
+                    idBook: book.contentBook?.url_secura,
+                  },
                 })
               }
             >
-              <MaterialIcons name="multitrack-audio" size={16} color="#F8D49A" />
+              <MaterialIcons
+                name="multitrack-audio"
+                size={16}
+                color="#F8D49A"
+              />
               <Text className="text-white font-semibold text-base ml-2">
                 Escuchar
               </Text>
@@ -239,18 +246,23 @@ export default function BookProps() {
               onPress={() =>
                 router.push({
                   pathname: `./${idBook}/watch`,
-                  params: { mediaSource: book.contentBook?.url_secura, idBook : book.contentBook?.url_secura},
+                  params: {
+                    mediaSource: book.contentBook?.url_secura,
+                    idBook: book.contentBook?.url_secura,
+                  },
                 })
               }
             >
-              <MaterialIcons name="video-collection" size={16} color="#F8D49A" />
+              <MaterialIcons
+                name="video-collection"
+                size={16}
+                color="#F8D49A"
+              />
               <Text className="text-white font-semibold text-base ml-2">
                 Ver video
               </Text>
             </TouchableOpacity>
-          )
-
-          }
+          )}
 
           {/* Status select */}
           <View style={{ minWidth: 150, maxWidth: 150 }}>
@@ -303,4 +315,3 @@ export default function BookProps() {
     </SafeAreaView>
   );
 }
-  
