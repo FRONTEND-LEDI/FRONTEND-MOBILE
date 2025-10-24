@@ -7,7 +7,6 @@ import { ScrollView, TouchableOpacity } from "react-native";
 type Foro = {
   _id: string;
   title: string;
-  description: string;
 };
 
 interface ForoTopicsProps {
@@ -36,11 +35,7 @@ const ForoTopics: React.FC<ForoTopicsProps> = ({
         }}
         className="mr-2"
       >
-        <TopicCard
-          title="General"
-          color={colors.secondary}
-          description="Trae todos"
-        />
+        <TopicCard title="General" color={colors.secondary} />
       </TouchableOpacity>
       {foros.map((item) => (
         <TouchableOpacity
@@ -51,11 +46,7 @@ const ForoTopics: React.FC<ForoTopicsProps> = ({
           }}
           className="mr-2"
         >
-          <TopicCard
-            title={item.title}
-            color={colors.primary}
-            description={item.description}
-          />
+          <TopicCard title={item.title} color={colors.primary} />
         </TouchableOpacity>
       ))}
     </ScrollView>

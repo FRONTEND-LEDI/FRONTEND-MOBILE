@@ -4,16 +4,14 @@ type Props = {
   title: string;
   posts?: number;
   color: string;
-  description: string;
 };
 
-export default function TopicCard({ title, posts, description, color }: Props) {
+export default function TopicCard({ title, posts, color }: Props) {
   return (
     <View style={[styles.card, { backgroundColor: color }]}>
       <Text style={styles.title}>{title}</Text>
       {/*       <Text style={styles.subtitle}>{posts} posts</Text>{" "}
        */}
-      <Text style={styles.subtitle}>{description} </Text>
     </View>
   );
 }

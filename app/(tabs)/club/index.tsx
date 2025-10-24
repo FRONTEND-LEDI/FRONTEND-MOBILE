@@ -89,7 +89,7 @@ export default function Forum() {
 
     currentSocket.on("coments-in-the-foro", (data: Comentario[]) => {
       const safeData = Array.isArray(data) ? data : [];
-      console.log(safeData.length);
+      console.log("Largo de los comentarios", safeData.length);
       setDisplayedComentarios([...safeData].reverse());
     });
 
@@ -184,7 +184,6 @@ export default function Forum() {
           {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
         </Text>
 
-        {/* LISTA DE COMENTARIOS FILTRADOS*/}
         {displayedComentarios.map((comment) => {
           let userName: string;
 

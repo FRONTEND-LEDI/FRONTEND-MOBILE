@@ -62,7 +62,7 @@ const getNivelStyle = (nivel: string): NivelStyle => {
     return {
       className: "bg-green-100 text-green-700 border-green-300",
       iconName: "leaf",
-      label: "Adulto Maduro",
+      label: "Adulto ",
     };
   }
   // Valor por defecto
