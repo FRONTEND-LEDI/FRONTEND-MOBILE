@@ -62,19 +62,21 @@ export const SignUpApi = async (
       throw new Error("Error en la solicitud: " + response.statusText);
     }
 
-    const data: any[] = await response.json();
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      return data;
+    }
     const allCategories = data
       .map((libro: any) => libro.category)
       .filter((category) => category !== null && category !== undefined)
       .map((category) => String(category).trim())
       .filter((category) => category !== "")
       .flatMap((category) => {
-        // Divide categorías combinadas por comas
         return category.split(",").map((cat) => cat.trim());
       })
-      .filter((category) => category !== ""); // Filtra nuevamente por si hay strings vacíos después del split
+      .filter((category) => category !== "");
 
-    // Elimina duplicados y ordena
     const categorias: string[] = [...new Set(allCategories)].sort();
     return categorias;
   } catch (error) {

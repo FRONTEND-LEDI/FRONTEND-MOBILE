@@ -3,8 +3,15 @@ import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   ScrollView,
   StatusBar,
@@ -36,13 +43,57 @@ type Comentario = {
   content: string;
   createdAt?: string;
 };
+const DisplayedComment = React.memo(
+  ({ comment, foros }: { comment: Comentario; foros: Foro[] }) => {
+    DisplayedComment.displayName = "DisplayedComment";
+    const userName =
+      typeof comment.idUser === "string"
+        ? "Usuario"
+        : comment.idUser.userName || "Usuario";
+
+    const isGeneralView = !foros.some((f) => f._id === comment.idForo);
+    const foroTitle =
+      foros.find((f) => f._id === comment.idForo)?.title || "un Foro";
+
+    const getInitials = (name: string) => name.charAt(0).toUpperCase();
+
+    return (
+      <View
+        key={comment._id || Math.random()}
+        className="bg-orange-100 p-3 rounded-xl mb-3 border border-orange-200 shadow-sm"
+      >
+        {/* Display de Nombre y Avatar (inicial) */}
+        <View className="flex-row items-center mb-1">
+          <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
+            <Text className="text-sm font-bold text-white">
+              {getInitials(userName)}
+            </Text>
+          </View>
+          <Text className="text-base font-semibold text-orange-800">
+            {userName}
+          </Text>
+          {isGeneralView && (
+            <Text className="text-xs text-gray-500 ml-2">en {foroTitle}</Text>
+          )}
+        </View>
+        {/* Contenido del comentario */}
+        <Text className="text-base text-gray-800 ml-11 mt-1">
+          {comment.content}
+        </Text>
+        <Text className="text-xs text-gray-400 text-right mt-1">
+          {comment.createdAt
+            ? new Date(comment.createdAt).toLocaleTimeString()
+            : ""}
+        </Text>
+      </View>
+    );
+  }
+);
 
 export default function Forum() {
   const [foros, setForos] = useState<Foro[]>([]);
-  const [displayedComentarios, setDisplayedComentarios] = useState<
-    Comentario[]
-  >([]);
-
+  const [displayedComment, setDisplayedComment] = useState<Comentario[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
   const [selectedForoId, setSelectedForoId] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
   const { user } = useContext(authContext);
@@ -56,7 +107,6 @@ export default function Forum() {
     }
     if (foroId) {
       console.log("Pidiendo comentarios para foro: ", foroId);
-      // solicitar los comentarios del foro
       currentSocket.emit("all-public-foro", foroId);
     } else {
       console.log("Pidiendo todos los comentarios");
@@ -71,26 +121,33 @@ export default function Forum() {
 
     const loadForos = async () => {
       const data = await getForosApi();
-      setForos(data);
+      setForos(
+        data.map((c: any) => ({
+          _id: c.id,
+          title: c.name,
+          description: c.description,
+        }))
+      );
     };
     loadForos();
+
     currentSocket.on("connect", () => {
       console.log("Connected to Socket.IO server!", currentSocket.id);
-      currentSocket.emit("get-all-foros");
+      setIsConnected(true);
       fetchComments(null);
     });
+    currentSocket.on("disconnect", () => setIsConnected(false));
 
     currentSocket.on("coments", (data: Comentario[]) => {
-      const safeData = Array.isArray(data) ? data : [];
-      if (!selectedForoId) {
-        setDisplayedComentarios([...safeData].reverse());
+      try {
+        const safeData = Array.isArray(data) ? data : [];
+        if (!selectedForoId) {
+          setDisplayedComment([...safeData].reverse());
+        }
+      } catch (error) {
+        console.log("Error socket get comments", error);
+        Alert.alert("Error trayendo comentarios");
       }
-    });
-
-    currentSocket.on("coments-in-the-foro", (data: Comentario[]) => {
-      const safeData = Array.isArray(data) ? data : [];
-      console.log("Largo de los comentarios", safeData.length);
-      setDisplayedComentarios([...safeData].reverse());
     });
 
     currentSocket.on("coment-created", (newComment: Comentario) => {
@@ -100,7 +157,7 @@ export default function Forum() {
           : newComment.idForo;
 
       if (!selectedForoId || selectedForoId === targetId) {
-        setDisplayedComentarios((prev) => [newComment, ...prev]);
+        setDisplayedComment((prev) => [newComment, ...prev]);
       }
     });
 
@@ -111,7 +168,6 @@ export default function Forum() {
     return () => {
       currentSocket.off("connect");
       currentSocket.off("coments");
-      currentSocket.off("coments-in-the-foro");
       currentSocket.off("coment-created");
       currentSocket.off("error");
       currentSocket.disconnect();
@@ -184,7 +240,7 @@ export default function Forum() {
           {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
         </Text>
 
-        {displayedComentarios.map((comment) => {
+        {displayedComment.map((comment) => {
           let userName: string;
 
           if (typeof comment.idUser === "string") {
@@ -232,7 +288,7 @@ export default function Forum() {
         })}
 
         {/* Mensaje si no hay comentarios */}
-        {displayedComentarios.length === 0 && (
+        {displayedComment.length === 0 && (
           <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
             <Text className="text-base text-gray-500 font-medium">
               No hay comentarios en este tema. ¡Sé el primero en escribir!
