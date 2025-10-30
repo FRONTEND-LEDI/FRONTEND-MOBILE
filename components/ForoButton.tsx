@@ -29,10 +29,7 @@ const ForoTopics: React.FC<ForoTopicsProps> = ({
     >
       <TouchableOpacity
         key="get-all"
-        onPress={() => {
-          console.log("ForoTopics: onGetAllComments pressed");
-          onGetAllComments();
-        }}
+        onPress={onGetAllComments}
         className="mr-2"
       >
         <TopicCard title="General" color={colors.secondary} />

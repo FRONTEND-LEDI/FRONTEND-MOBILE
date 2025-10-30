@@ -3,6 +3,7 @@ import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStorage from "expo-secure-store";
 import React, {
   useCallback,
   useContext,
@@ -101,119 +102,84 @@ export default function Forum() {
 
   const fetchComments = useCallback((foroId: string | null) => {
     const currentSocket = socketRef.current;
-    if (!currentSocket || !currentSocket.connected) {
-      console.log("Socket no conectado no se puede solicitar comentarios");
-      return;
-    }
+    if (!currentSocket) return;
+
     if (foroId) {
-      console.log("Pidiendo comentarios para foro: ", foroId);
       currentSocket.emit("all-public-foro", foroId);
     } else {
-      console.log("Pidiendo todos los comentarios");
       currentSocket.emit("all-public");
     }
   }, []);
 
   useEffect(() => {
-    const currentSocket = io(URL);
-    socketRef.current = currentSocket;
-    console.log("Pantalla concentrada...");
+    const token = SecureStorage.getItemAsync("token");
+    const socket = io(URL, {
+      auth: { token },
+    });
+
+    socketRef.current = socket;
 
     const loadForos = async () => {
-      const data = await getForosApi();
-      setForos(
-        data.map((c: any) => ({
-          _id: c.id,
-          title: c.name,
-          description: c.description,
-        }))
-      );
+      try {
+        const data = await getForosApi();
+        setForos(data);
+      } catch (error) {
+        Alert.alert("Error", "No se pudieron cargar los foros");
+      }
     };
     loadForos();
 
-    currentSocket.on("connect", () => {
-      console.log("Connected to Socket.IO server!", currentSocket.id);
+    socket.on("connect", () => {
       setIsConnected(true);
-      fetchComments(null);
+      fetchComments(selectedForoId);
     });
-    currentSocket.on("disconnect", () => setIsConnected(false));
 
-    currentSocket.on("coments", (data: Comentario[]) => {
-      try {
-        const safeData = Array.isArray(data) ? data : [];
-        if (!selectedForoId) {
-          setDisplayedComment([...safeData].reverse());
-        }
-      } catch (error) {
-        console.log("Error socket get comments", error);
-        Alert.alert("Error trayendo comentarios");
+    socket.on("coments", (data: Comentario[]) => {
+      const safeData = Array.isArray(data) ? data : [];
+      if (!selectedForoId) {
+        setDisplayedComment([...safeData].reverse());
       }
     });
 
-    currentSocket.on("coment-created", (newComment: Comentario) => {
-      const targetId =
-        typeof newComment.idUser === "string"
-          ? newComment.idForo
-          : newComment.idForo;
+    socket.on("coments-in-the-foro", (data: Comentario[]) => {
+      const safeData = Array.isArray(data) ? data : [];
+      setDisplayedComment([...safeData].reverse());
+    });
 
-      if (!selectedForoId || selectedForoId === targetId) {
+    socket.on("coment-created", (newComment: Comentario) => {
+      if (!selectedForoId || selectedForoId === newComment.idForo) {
         setDisplayedComment((prev) => [newComment, ...prev]);
       }
     });
 
-    currentSocket.on("error", (error: { msg: string }) => {
-      console.error("Socket.IO error:", error.msg);
-    });
-
     return () => {
-      currentSocket.off("connect");
-      currentSocket.off("coments");
-      currentSocket.off("coment-created");
-      currentSocket.off("error");
-      currentSocket.disconnect();
+      socket.disconnect();
       socketRef.current = null;
-      console.log("Disconnecting socket");
     };
-  }, []);
+  }, [selectedForoId, fetchComments]);
 
   const handleTopicPress = (foroId: string) => {
-    console.log("handleTopicPress called with:", foroId);
     setSelectedForoId(foroId);
     fetchComments(foroId);
   };
 
-  useEffect(() => {
-    console.log("selectedForoId changed:", selectedForoId);
-  }, [selectedForoId]);
-
   const handleGetAllComments = () => {
-    try {
-      setSelectedForoId(null);
-      fetchComments(null);
-    } catch (error) {
-      console.log("Error al traer todos los comentarios", error);
-    }
+    setSelectedForoId(null);
+    fetchComments(null);
   };
 
   const handleSendComment = () => {
-    try {
-      const currentSocket = socketRef.current;
-      if (!currentSocket || !currentSocket.connected) {
-        console.warn("Socket no conectado, no se pudo enviar el comentario.");
-        return;
-      }
-      if (selectedForoId && newComment.trim()) {
-        const commentData = {
-          idForo: selectedForoId,
-          idUser: user?.id || "anonymous_user",
-          content: newComment,
-        };
-        currentSocket.emit("new-public", commentData);
-        setNewComment("");
-      }
-    } catch (error) {
-      console.log("Error al enviar Comentario", error);
-    }
+    const currentSocket = socketRef.current;
+    if (!currentSocket || !selectedForoId || !newComment.trim()) return;
+
+    const commentData = {
+      idForo: selectedForoId,
+      idUser: user?.id || "anonymous_user",
+      content: newComment,
+    };
+
+    currentSocket.emit("new-public", commentData);
+    setNewComment("");
   };
 
   return (
@@ -240,52 +206,13 @@ export default function Forum() {
           {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
         </Text>
 
-        {displayedComment.map((comment) => {
-          let userName: string;
-
-          if (typeof comment.idUser === "string") {
-            userName = "Usuario Desconocido";
-          } else {
-            userName = comment.idUser.userName || "Usuario";
-          }
-          return (
-            <View
-              // Usamos el ID del comentario, si no existe (raro), usamos un random
-              key={comment._id || Math.random()}
-              className="bg-orange-100 p-3 rounded-xl mb-3 border border-orange-200 shadow-sm"
-            >
-              {/* Display de Nombre y Avatar (inicial) */}
-              <View className="flex-row items-center mb-1">
-                <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
-                  <Text className="text-sm font-bold text-white">
-                    {userName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-                <Text className="text-base font-semibold text-orange-800">
-                  {userName}
-                </Text>
-                {!selectedForoId && (
-                  <Text className="text-xs text-gray-500 ml-2">
-                    en{" "}
-                    {foros.find((f) => f._id === comment.idForo)?.title ||
-                      "un Foro"}
-                  </Text>
-                )}
-              </View>
-              <Text className="text-base text-gray-800 ml-11 mt-1">
-                {comment.content}
-              </Text>
-              <Text className="text-xs text-gray-400 text-right mt-1">
-                {comment.createdAt
-                  ? new Date(comment.createdAt).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : ""}
-              </Text>
-            </View>
-          );
-        })}
+        {displayedComment.map((comment) => (
+          <DisplayedComment
+            key={comment._id || comment.idComent}
+            comment={comment}
+            foros={foros}
+          />
+        ))}
 
         {/* Mensaje si no hay comentarios */}
         {displayedComment.length === 0 && (
