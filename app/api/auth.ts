@@ -65,16 +65,10 @@ export const SignUpApi = async (
 
     const data = await response.json();
 
-<<<<<<< HEAD
     if(!Array.isArray(data)){
       return data
     }
 
-=======
-    if (!Array.isArray(data)) {
-      return data;
-    }
->>>>>>> 9cffe85ebfe8afbed71e971c2b7e53d3ee2b6797
     const allCategories = data
       .map((libro: any) => libro.category)
       .filter((category) => category !== null && category !== undefined)
