@@ -18,20 +18,17 @@ export default function TopicCard({ title, posts, color }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 100,
-    height: 80,
-    borderRadius: 16,
-    padding: 16,
-    marginRight: 16,
+    width: 130,
+    height: 50,
+    borderRadius: 25,
+    padding: 6,
+    margin: 4,
     justifyContent: "center",
+    alignItems: "center",
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#fff",
     fontWeight: "bold",
-  },
-  subtitle: {
-    fontSize: 12,
-    color: "#e0e0e0",
   },
 });

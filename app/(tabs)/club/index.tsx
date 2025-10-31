@@ -2,6 +2,7 @@ import { getForosApi } from "@/app/api/club";
 import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
+import { Comentario, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStorage from "expo-secure-store";
 import React, {
@@ -23,73 +24,9 @@ import {
 } from "react-native";
 import { io, Socket } from "socket.io-client";
 import ForoTopics from "../../../components/ForoButton";
+import DisplayedComment from "../../../components/club/_DisplayComment";
 
 const URL = `http://${IP_ADDRESS}:3402`;
-
-type Foro = {
-  _id: string;
-  title: string;
-  description: string;
-};
-type CommentUser = {
-  _id: string;
-  userName?: string;
-};
-
-type Comentario = {
-  _id: string;
-  idComent?: string;
-  idForo: string;
-  idUser: string | CommentUser;
-  content: string;
-  createdAt?: string;
-};
-const DisplayedComment = React.memo(
-  ({ comment, foros }: { comment: Comentario; foros: Foro[] }) => {
-    DisplayedComment.displayName = "DisplayedComment";
-    const userName =
-      typeof comment.idUser === "string"
-        ? "Usuario"
-        : comment.idUser.userName || "Usuario";
-
-    const isGeneralView = !foros.some((f) => f._id === comment.idForo);
-    const foroTitle =
-      foros.find((f) => f._id === comment.idForo)?.title || "un Foro";
-
-    const getInitials = (name: string) => name.charAt(0).toUpperCase();
-
-    return (
-      <View
-        key={comment._id || Math.random()}
-        className="bg-orange-100 p-3 rounded-xl mb-3 border border-orange-200 shadow-sm"
-      >
-        {/* Display de Nombre y Avatar (inicial) */}
-        <View className="flex-row items-center mb-1">
-          <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
-            <Text className="text-sm font-bold text-white">
-              {getInitials(userName)}
-            </Text>
-          </View>
-          <Text className="text-base font-semibold text-orange-800">
-            {userName}
-          </Text>
-          {isGeneralView && (
-            <Text className="text-xs text-gray-500 ml-2">en {foroTitle}</Text>
-          )}
-        </View>
-        {/* Contenido del comentario */}
-        <Text className="text-base text-gray-800 ml-11 mt-1">
-          {comment.content}
-        </Text>
-        <Text className="text-xs text-gray-400 text-right mt-1">
-          {comment.createdAt
-            ? new Date(comment.createdAt).toLocaleTimeString()
-            : ""}
-        </Text>
-      </View>
-    );
-  }
-);
 
 export default function Forum() {
   const [foros, setForos] = useState<Foro[]>([]);
@@ -112,51 +49,81 @@ export default function Forum() {
   }, []);
 
   useEffect(() => {
-    const token = SecureStorage.getItemAsync("token");
-    const socket = io(URL, {
-      auth: { token },
-    });
+    const initializeSocket = async () => {
+      const token = await SecureStorage.getItemAsync("token").catch((error) => {
+        console.error("Error al obtener token:", error);
+        return null;
+      });
 
-    socketRef.current = socket;
+      const currentSocket = io(URL, {
+        auth: { token: token || "" },
+      });
+      socketRef.current = currentSocket;
+
+      currentSocket.on("connect", () => {
+        console.log("Connected to Socket.IO server!", currentSocket.id);
+        setIsConnected(true);
+        fetchComments(null);
+      });
+      currentSocket.on("disconnect", () => setIsConnected(false));
+
+      currentSocket.on("coments", (data: Comentario[]) => {
+        try {
+          const safeData = Array.isArray(data) ? data : [];
+          if (!selectedForoId) {
+            setDisplayedComment([...safeData].reverse());
+          }
+        } catch (error) {
+          console.error("Error socket get comments", error);
+        }
+      });
+      currentSocket.on("coments-in-the-foro", (data: Comentario[]) => {
+        const safeData = Array.isArray(data) ? data : [];
+        setDisplayedComment([...safeData].reverse());
+      });
+      currentSocket.on("coment-created", (newComment: Comentario) => {
+        if (!selectedForoId || selectedForoId === newComment.idForo) {
+          setDisplayedComment((prev) => [newComment, ...prev]);
+        }
+      });
+
+      currentSocket.on("error", (error: { msg: string }) => {
+        console.error("Socket.IO error:", error.msg);
+      });
+
+      const cleanup = () => {
+        currentSocket.off("connect");
+        currentSocket.off("disconnect");
+        currentSocket.off("coments");
+        currentSocket.off("coments-in-the-foro");
+        currentSocket.off("coment-created");
+        currentSocket.off("error");
+        currentSocket.disconnect();
+        socketRef.current = null;
+        setIsConnected(false);
+        console.log("Disconnecting socket");
+      };
+
+      return cleanup;
+    };
+
+    const cleanupPromise = initializeSocket();
 
     const loadForos = async () => {
       try {
         const data = await getForosApi();
         setForos(data);
       } catch (error) {
-        Alert.alert("Error", "No se pudieron cargar los foros");
+        console.error("Error al obtener foros", error);
       }
     };
     loadForos();
 
-    socket.on("connect", () => {
-      setIsConnected(true);
-      fetchComments(selectedForoId);
-    });
-
-    socket.on("coments", (data: Comentario[]) => {
-      const safeData = Array.isArray(data) ? data : [];
-      if (!selectedForoId) {
-        setDisplayedComment([...safeData].reverse());
-      }
-    });
-
-    socket.on("coments-in-the-foro", (data: Comentario[]) => {
-      const safeData = Array.isArray(data) ? data : [];
-      setDisplayedComment([...safeData].reverse());
-    });
-
-    socket.on("coment-created", (newComment: Comentario) => {
-      if (!selectedForoId || selectedForoId === newComment.idForo) {
-        setDisplayedComment((prev) => [newComment, ...prev]);
-      }
-    });
-
+    // Asegurar que la función de limpieza se ejecute al desmontar
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      cleanupPromise.then((cleanup) => cleanup());
     };
-  }, [selectedForoId, fetchComments]);
+  }, [selectedForoId]);
 
   const handleTopicPress = (foroId: string) => {
     setSelectedForoId(foroId);
@@ -169,21 +136,33 @@ export default function Forum() {
   };
 
   const handleSendComment = () => {
-    const currentSocket = socketRef.current;
-    if (!currentSocket || !selectedForoId || !newComment.trim()) return;
-
-    const commentData = {
-      idForo: selectedForoId,
-      idUser: user?.id || "anonymous_user",
-      content: newComment,
-    };
-
-    currentSocket.emit("new-public", commentData);
-    setNewComment("");
+    try {
+      const currentSocket = socketRef.current;
+      if (!currentSocket || !currentSocket.connected) {
+        console.warn("Socket no conectado, no se pudo enviar el comentario");
+        return;
+      }
+      const userId = user?.id;
+      if (!userId) {
+        Alert.alert("Acceso denegado", "No se pudo enviar comentario");
+        return;
+      }
+      if (selectedForoId && newComment.trim()) {
+        const commentData = {
+          idForo: selectedForoId,
+          idUser: userId,
+          content: newComment,
+        };
+        currentSocket.emit("new-public", commentData);
+        setNewComment("");
+      }
+    } catch (error) {
+      console.log("Error al enviar comentario", error);
+    }
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-white" behavior="padding">
+    <KeyboardAvoidingView className="flex-1 bg-white">
       <ScrollView
         contentContainerStyle={{
           paddingBottom: 120,
@@ -198,7 +177,6 @@ export default function Forum() {
           onTopicPress={handleTopicPress}
           onGetAllComments={handleGetAllComments}
         />
-        {/* Titulo de los comentarios */}
         <Text
           className="text-xl font-bold mt-5 mb-3"
           style={{ color: colors.primary }}
@@ -214,7 +192,6 @@ export default function Forum() {
           />
         ))}
 
-        {/* Mensaje si no hay comentarios */}
         {displayedComment.length === 0 && (
           <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
             <Text className="text-base text-gray-500 font-medium">
@@ -224,7 +201,6 @@ export default function Forum() {
         )}
       </ScrollView>
 
-      {/* Input de Comentario */}
       {selectedForoId ? (
         <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
           <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
