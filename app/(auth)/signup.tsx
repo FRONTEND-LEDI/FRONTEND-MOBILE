@@ -204,7 +204,7 @@ export default function RegisterScreen() {
             source={Logo}
             className="w-32 h-32 rounded-full border-2 border-primary "
             accessible={true}
-          />{" "}
+          />
         </View>
         <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
           Comienza ahora
@@ -267,7 +267,7 @@ export default function RegisterScreen() {
             source={Logo}
             className="w-32 h-32 rounded-full border-2 border-primary "
             accessible={true}
-          />{" "}
+          />
         </View>
         <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
           Comienza ahora
@@ -331,7 +331,7 @@ export default function RegisterScreen() {
             source={Logo}
             className="w-32 h-32 rounded-full border-2 border-primary "
             accessible={true}
-          />{" "}
+          />
         </View>
         <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
           Elige tus intereses
@@ -400,7 +400,7 @@ export default function RegisterScreen() {
             source={Logo}
             className="w-32 h-32 rounded-full border-2 border-primary "
             accessible={true}
-          />{" "}
+          />
         </View>
         <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
           Selecciona el avatar que más te guste
