@@ -1,10 +1,15 @@
 import chatLogo from "@/assets/images/LOGO.png";
 import { CustomTabBar } from "@/components/CustomTabBar";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import { Image } from "react-native";
 
 export default function TabsLayout() {
+  const segments = useSegments() as string[];
+
+  // Verifica si estamos en la ruta 'chat' (que corresponde a chat/index)
+  const isChatScreen = segments.includes("chat");
+
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
@@ -17,6 +22,7 @@ export default function TabsLayout() {
           backgroundColor: "#D97706",
           borderTopWidth: 0,
           height: 80,
+          display: isChatScreen ? "none" : "flex", // 👈 Aquí se oculta solo en chat
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -49,8 +55,8 @@ export default function TabsLayout() {
             <Image
               source={chatLogo}
               style={{
-                width: size * 1.5, // 50% más grande
-                height: size * 1.5, // 50% más grande
+                width: size * 1.5,
+                height: size * 1.5,
               }}
             />
           ),

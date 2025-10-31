@@ -27,10 +27,17 @@ export const getBooks = async () => {
 
 export const getBookById = async (id: string) => {
   try {
+    const token = await SecureStore.getItemAsync("token");
+    if (!token) {
+      console.log("No token found");
+      return null;
+    }
     const response = await fetch(`http://${URI}/book/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "x-client": "mobile",
+
       },
       
     });
@@ -63,6 +70,7 @@ export const getBySearch = async (query: string) => {
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${token}`,
+          "x-client": "mobile",
         },
         credentials: "include",
       }
@@ -103,6 +111,7 @@ export const  getBooksByFiltering = async (filters: {
       method: "POST",
       headers: { "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
+      "x-client": "mobile",
       },
       body: JSON.stringify(filters),
     });

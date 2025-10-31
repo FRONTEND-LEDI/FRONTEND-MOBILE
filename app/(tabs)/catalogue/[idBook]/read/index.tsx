@@ -14,6 +14,7 @@ const DEBOUNCE_DELAY = 2000;
 
 export default function ReadBook() {
   const { idBook } = useLocalSearchParams();
+  console.log("el id", idBook);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [existingProgressId, setExistingProgressId] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function ReadBook() {
         console.log("Error obteniendo progreso:", error);
         // Fallback a página 1 en caso de error
         lastPageFromProgress.current = 1;
+        console.log(`http://${URI_VISOR}/book/read/${idBook}?page=1`);
         setUri(`http://${URI_VISOR}/book/read/${idBook}?page=1`);
       } finally {
         setIsLoading(false);

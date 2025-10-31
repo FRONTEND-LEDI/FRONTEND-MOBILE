@@ -8,7 +8,13 @@ type Foro = {
 };
 export const getForosApi = async (): Promise<Foro[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/foros`);
+    const response = await fetch(`${API_BASE_URL}/foros`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-client": "mobile",
+      },
+    });
     if (!response.ok) {
       console.error("Error al cargar foros: ", response.status);
       return [];

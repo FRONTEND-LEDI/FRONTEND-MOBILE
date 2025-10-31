@@ -18,6 +18,7 @@ export const booksbyRecomendation = async () => {
         headers: {
           "Content-Type": "application/json",
           "authorization": `Bearer ${token}`,
+          "x-client": "mobile",
         },
         credentials: "include"
         
@@ -55,6 +56,7 @@ export const getBookbyLatestProgress = async () => {
         headers: {
           "Content-Type": "application/json",
           "authorization": `Bearer ${token}`,
+          "x-client": "mobile",
         },
         credentials: "include"
         

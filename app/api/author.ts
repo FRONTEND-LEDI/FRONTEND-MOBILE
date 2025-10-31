@@ -1,10 +1,17 @@
 import { URI } from "@/constants/ip";
+import * as SecureStore from "expo-secure-store";
 export const getAuthorById = async (id: string) => {
     try {
+        const token = await SecureStore.getItemAsync("token");
+            if (!token) {
+              console.log("No token found");
+              return null;
+            }
         const response = await fetch(`http://${URI}/author/${id}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
+                "x-client": "mobile",
             },
         });
 

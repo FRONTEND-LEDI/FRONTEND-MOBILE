@@ -6,7 +6,8 @@ export const getFormats= async () => {
 
     method: "GET",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "x-client": "mobile",
     }
     })
 
@@ -27,7 +28,8 @@ export const getYears = async () => {
     const response = await fetch(`http://${URI}/booksYears`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-client": "mobile",
       }
     });
     if (!response.ok) {
@@ -45,7 +47,11 @@ export const getSubgenres = async () => {
   try {
     const response = await fetch(`http://${URI}/booksSubgenres`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" }
+      headers: { 
+        "Content-Type": "application/json",
+        "x-client": "mobile",
+
+       }
     });
 
     if (!response.ok) {

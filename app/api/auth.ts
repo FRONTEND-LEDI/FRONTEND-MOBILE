@@ -44,6 +44,7 @@ export const SignUpApi = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-client": "mobile",
       },
       body: JSON.stringify({
         userName,
@@ -62,7 +63,12 @@ export const SignUpApi = async (
       throw new Error("Error en la solicitud: " + response.statusText);
     }
 
-    const data: any[] = await response.json();
+    const data = await response.json();
+
+    if(!Array.isArray(data)){
+      return data
+    }
+
     const allCategories = data
       .map((libro: any) => libro.category)
       .filter((category) => category !== null && category !== undefined)
@@ -87,6 +93,7 @@ export const getUserData = async (token: string) => {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
+        "x-client": "mobile",
       },
     });
     if (!response.ok) {
@@ -106,6 +113,7 @@ export const getCategories: () => Promise<string[]> = async () => {
       headers: {
         "Content-Type": "application/json",
         "x-client": "mobile",
+        
       },
     });
     if (!response.ok) {

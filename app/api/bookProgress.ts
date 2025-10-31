@@ -29,6 +29,7 @@ export const updateBookProgress = async (
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
+        "x-client": "mobile",
       },
       body: JSON.stringify(requestBody),
     });
@@ -93,6 +94,7 @@ export const postSaveProgress = async (bookData: {
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
+        "x-client": "mobile",
       },
       body: JSON.stringify(requestBody),
     });
@@ -153,6 +155,7 @@ export const getBookProgressById = async (idBook: string) => {
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
+        "x-client": "mobile",
       },
     });
 
@@ -228,6 +231,7 @@ export const deleteBookProgress = async (idBook: string) => {
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
+        "x-client": "mobile",
       },
       body: JSON.stringify({ idBook }),
     });
