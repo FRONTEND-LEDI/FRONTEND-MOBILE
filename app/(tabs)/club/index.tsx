@@ -2,7 +2,7 @@ import { getForosApi } from "@/app/api/club";
 import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
-import { Comentario, Foro } from "@/types/club";
+import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStorage from "expo-secure-store";
 import React, {
@@ -30,13 +30,11 @@ const URL = `http://${IP_ADDRESS}:3402`;
 
 export default function Forum() {
   const [foros, setForos] = useState<Foro[]>([]);
-  const [displayedComment, setDisplayedComment] = useState<Comentario[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [displayedComment, setDisplayedComment] = useState<Comment[]>([]);
   const [selectedForoId, setSelectedForoId] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
-  const { user } = useContext(authContext);
+  const { user, isLoading } = useContext(authContext);
   const socketRef = useRef<Socket | null>(null);
-
   const fetchComments = useCallback((foroId: string | null) => {
     const currentSocket = socketRef.current;
     if (!currentSocket) return;
@@ -62,12 +60,11 @@ export default function Forum() {
 
       currentSocket.on("connect", () => {
         console.log("Connected to Socket.IO server!", currentSocket.id);
-        setIsConnected(true);
         fetchComments(null);
       });
-      currentSocket.on("disconnect", () => setIsConnected(false));
+      currentSocket.on("disconnect", () => console.log("disconn :("));
 
-      currentSocket.on("coments", (data: Comentario[]) => {
+      currentSocket.on("coments", (data: Comment[]) => {
         try {
           const safeData = Array.isArray(data) ? data : [];
           if (!selectedForoId) {
@@ -77,18 +74,24 @@ export default function Forum() {
           console.error("Error socket get comments", error);
         }
       });
-      currentSocket.on("coments-in-the-foro", (data: Comentario[]) => {
+      currentSocket.on("coments-in-the-foro", (data: Comment[]) => {
         const safeData = Array.isArray(data) ? data : [];
         setDisplayedComment([...safeData].reverse());
       });
-      currentSocket.on("coment-created", (newComment: Comentario) => {
+      currentSocket.on("coment-created", (newComment: Comment) => {
         if (!selectedForoId || selectedForoId === newComment.idForo) {
           setDisplayedComment((prev) => [newComment, ...prev]);
         }
-      });
+        currentSocket.on("update", (data: Comment[]) => {
+          setDisplayedComment([...data].reverse());
+        });
 
-      currentSocket.on("error", (error: { msg: string }) => {
-        console.error("Socket.IO error:", error.msg);
+        currentSocket.on("Delete", (data: Comment[]) => {
+          setDisplayedComment([...data].reverse());
+        });
+        currentSocket.on("error", (error: { msg: string }) => {
+          console.error("Socket.IO error:", error.msg);
+        });
       });
 
       const cleanup = () => {
@@ -97,10 +100,11 @@ export default function Forum() {
         currentSocket.off("coments");
         currentSocket.off("coments-in-the-foro");
         currentSocket.off("coment-created");
+        currentSocket.off("update");
+        currentSocket.off("Delete");
         currentSocket.off("error");
         currentSocket.disconnect();
         socketRef.current = null;
-        setIsConnected(false);
         console.log("Disconnecting socket");
       };
 
@@ -119,11 +123,10 @@ export default function Forum() {
     };
     loadForos();
 
-    // Asegurar que la función de limpieza se ejecute al desmontar
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
-  }, [selectedForoId]);
+  }, [selectedForoId, fetchComments]);
 
   const handleTopicPress = (foroId: string) => {
     setSelectedForoId(foroId);
@@ -136,28 +139,30 @@ export default function Forum() {
   };
 
   const handleSendComment = () => {
-    try {
-      const currentSocket = socketRef.current;
-      if (!currentSocket || !currentSocket.connected) {
-        console.warn("Socket no conectado, no se pudo enviar el comentario");
-        return;
-      }
-      const userId = user?.id;
-      if (!userId) {
-        Alert.alert("Acceso denegado", "No se pudo enviar comentario");
-        return;
-      }
-      if (selectedForoId && newComment.trim()) {
-        const commentData = {
-          idForo: selectedForoId,
-          idUser: userId,
-          content: newComment,
-        };
-        currentSocket.emit("new-public", commentData);
-        setNewComment("");
-      }
-    } catch (error) {
-      console.log("Error al enviar comentario", error);
+    const currentSocket = socketRef.current;
+    if (!currentSocket || !currentSocket.connected) {
+      Alert.alert("Error", "No hay conexión con el servidor");
+      return;
+    }
+
+    if (isLoading) {
+      Alert.alert("Espere", "Verificando sesión...");
+      return;
+    }
+
+    if (!user) {
+      Alert.alert("Acceso denegado", "Inicia sesión para poder comentar");
+      return;
+    }
+
+    if (selectedForoId && newComment.trim()) {
+      const commentData = {
+        idForo: selectedForoId,
+        idUser: user._id,
+        content: newComment,
+      };
+      currentSocket.emit("new-public", commentData);
+      setNewComment("");
     }
   };
 
@@ -186,9 +191,10 @@ export default function Forum() {
 
         {displayedComment.map((comment) => (
           <DisplayedComment
-            key={comment._id || comment.idComent}
+            key={comment._id}
             comment={comment}
             foros={foros}
+            socket={socketRef.current}
           />
         ))}
 

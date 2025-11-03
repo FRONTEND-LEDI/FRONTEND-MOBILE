@@ -24,13 +24,10 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
             authorization: `Bearer ${token}`,
           },
         });
+        const responseData = await res.json();
+        const userData = responseData.result;
 
-        const data = await res.json();
-
-        console.log("data", data);
-
-        // Guardamos los datos del usuario en el contexto
-        setUser(data.user_data);
+        setUser(userData);
         setIsLogin(true);
       } catch (error) {
         console.error("Error al verificar sesión:", error);
@@ -44,8 +41,6 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     getData();
   }, []);
-
-  
 
   const logout = async () => {
     await SecureStore.deleteItemAsync("token");
