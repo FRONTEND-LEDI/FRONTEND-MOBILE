@@ -7,7 +7,6 @@ import { Image } from "react-native";
 export default function TabsLayout() {
   const segments = useSegments() as string[];
 
-  // Verifica si estamos en la ruta 'chat' (que corresponde a chat/index)
   const isChatScreen = segments.includes("chat");
 
   return (

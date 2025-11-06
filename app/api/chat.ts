@@ -5,7 +5,7 @@ import * as SecureStore from "expo-secure-store";
 // Timeout para requests (8 segundos)
 const REQUEST_TIMEOUT = 1000000
 
-async function getToken(): Promise<string> {
+export async function getToken(): Promise<string> {
   const token = await SecureStore.getItemAsync("token");
   if (!token) {
     throw new Error("No se encontró token. Inicia sesión.");
