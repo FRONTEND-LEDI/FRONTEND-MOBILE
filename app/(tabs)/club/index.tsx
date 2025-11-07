@@ -22,7 +22,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { io, Socket } from "socket.io-client";
 import DisplayedComment from "../../../components/club/_DisplayComments";
 import CommentsAnswers from "../../../components/club/CommentsAnswers";
@@ -71,8 +70,9 @@ export default function Forum() {
       currentSocket.on("coments", (data: Comment[]) => {
         try {
           const safeData = Array.isArray(data) ? data : [];
+          const mainComments = safeData.filter((comment) => !comment.idComent);
           if (!selectedForoId) {
-            setDisplayedComment([...safeData].reverse());
+            setDisplayedComment([...mainComments].reverse());
           }
         } catch (error) {
           console.error("Error socket get comments", error);
@@ -80,24 +80,28 @@ export default function Forum() {
       });
       currentSocket.on("coments-in-the-foro", (data: Comment[]) => {
         const safeData = Array.isArray(data) ? data : [];
-        setDisplayedComment([...safeData].reverse());
+        const mainComments = safeData.filter((comment) => !comment.idComent);
+        setDisplayedComment([...mainComments].reverse());
       });
       currentSocket.on("coment-created", (newComment: Comment) => {
         if (!selectedForoId || selectedForoId === newComment.idForo) {
           setDisplayedComment((prev) => [newComment, ...prev]);
         }
-        currentSocket.on("update", (data: Comment[]) => {
-          setDisplayedComment([...data].reverse());
-        });
-
-        currentSocket.on("Delete", (data: Comment[]) => {
-          setDisplayedComment([...data].reverse());
-        });
-        currentSocket.on("error", (error: { msg: string }) => {
-          console.error("Socket.IO error:", error.msg);
-        });
       });
 
+      currentSocket.on("update", (data: Comment[]) => {
+        const mainComments = data.filter((comment) => !comment.idComent);
+        setDisplayedComment([...mainComments].reverse());
+      });
+
+      currentSocket.on("Delete", (data: Comment[]) => {
+        const mainComments = data.filter((comment) => !comment.idComent);
+        setDisplayedComment([...mainComments].reverse());
+      });
+
+      currentSocket.on("error", (error: { msg: string }) => {
+        console.error("Socket.IO error:", error.msg);
+      });
       const cleanup = () => {
         currentSocket.off("connect");
         currentSocket.off("disconnect");
@@ -172,95 +176,97 @@ export default function Forum() {
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-white">
-      <GestureHandlerRootView>
-        <ScrollView
-          contentContainerStyle={{
-            paddingBottom: 120,
-            paddingHorizontal: 5,
-            paddingTop: 30,
-          }}
-          className="flex-1 px-6"
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 120,
+          paddingHorizontal: 5,
+          paddingTop: 30,
+        }}
+        className="flex-1 px-6"
+      >
+        <ForoTopics
+          foros={foros}
+          selectedForoId={selectedForoId}
+          onTopicPress={handleTopicPress}
+          onGetAllComments={handleGetAllComments}
+        />
+        <Text
+          className="text-xl font-bold mt-5 mb-3"
+          style={{ color: colors.primary }}
         >
-          <ForoTopics
+          {selectedForoId
+            ? `Comentarios del Foro ${
+                foros.find((f) => f._id === selectedForoId)?.title
+              }`
+            : "Todos los comentarios"}
+        </Text>
+
+        {displayedComment.map((comment) => (
+          <DisplayedComment
+            key={comment._id}
+            comment={comment}
             foros={foros}
-            selectedForoId={selectedForoId}
-            onTopicPress={handleTopicPress}
-            onGetAllComments={handleGetAllComments}
+            socket={socketRef.current}
+            onViewThread={(c) => {
+              setSelectedComment(c);
+              setModalVisible(true);
+            }}
           />
-          <Text
-            className="text-xl font-bold mt-5 mb-3"
-            style={{ color: colors.primary }}
-          >
-            {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
-          </Text>
+        ))}
 
-          {displayedComment.map((comment) => (
-            <DisplayedComment
-              key={comment._id}
-              comment={comment}
-              foros={foros}
-              socket={socketRef.current}
-              onViewThread={(c) => {
-                setSelectedComment(c);
-                setModalVisible(true);
-              }}
-            />
-          ))}
-
-          {displayedComment.length === 0 && (
-            <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
-              <Text className="text-base text-gray-500 font-medium">
-                No hay comentarios en este tema. ¡Sé el primero en escribir!
-              </Text>
-            </View>
-          )}
-        </ScrollView>
-
-        {selectedForoId ? (
-          <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
-            <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
-              <TextInput
-                className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
-                placeholder={`Comentar en: ${
-                  foros.find((f) => f._id === selectedForoId)?.title ||
-                  "Foro Seleccionado"
-                }...`}
-                placeholderTextColor="#9ca3af"
-                value={newComment}
-                onChangeText={setNewComment}
-                editable={!!selectedForoId}
-              />
-              <TouchableOpacity
-                className={`rounded-full p-2 ml-2 ${
-                  newComment.trim() ? "bg-orange-500" : "bg-gray-300"
-                }`}
-                onPress={handleSendComment}
-                disabled={!newComment.trim()}
-              >
-                <Ionicons name="arrow-up" size={20} color="white" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View className="bg-gray-100 p-4 rounded-xl mx-4 mb-4 items-center justify-center border border-gray-200">
-            <Text className="text-base text-gray-500 text-center font-medium">
-              Selecciona un tema para participar
+        {displayedComment.length === 0 && (
+          <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
+            <Text className="text-base text-gray-500 font-medium">
+              No hay comentarios en este tema. ¡Sé el primero en escribir!
             </Text>
           </View>
         )}
-        <CommentsAnswers
-          isVisible={modalVisible}
-          onClose={() => {
-            setModalVisible(false);
-            setSelectedComment(null);
-          }}
-          comment={selectedComment}
-          socket={socketRef.current}
-          allForos={foros}
-        />
+      </ScrollView>
 
-        <StatusBar backgroundColor={colors.primary} />
-      </GestureHandlerRootView>
+      {selectedForoId ? (
+        <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+          <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
+            <TextInput
+              className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
+              placeholder={`Comentar en: ${
+                foros.find((f) => f._id === selectedForoId)?.title ||
+                "Foro Seleccionado"
+              }...`}
+              placeholderTextColor="#9ca3af"
+              value={newComment}
+              onChangeText={setNewComment}
+              editable={!!selectedForoId}
+            />
+            <TouchableOpacity
+              className={`rounded-full p-2 ml-2 ${
+                newComment.trim() ? "bg-orange-500" : "bg-gray-300"
+              }`}
+              onPress={handleSendComment}
+              disabled={!newComment.trim()}
+            >
+              <Ionicons name="arrow-up" size={20} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <View className="bg-gray-100 p-4 rounded-xl mx-4 mb-4 items-center justify-center border border-gray-200">
+          <Text className="text-base text-gray-500 text-center font-medium">
+            Selecciona un tema para participar
+          </Text>
+        </View>
+      )}
+      <CommentsAnswers
+        isVisible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedComment(null);
+        }}
+        comment={selectedComment}
+        socket={socketRef.current}
+        allForos={foros}
+      />
+
+      <StatusBar backgroundColor={colors.primary} />
     </KeyboardAvoidingView>
   );
 }

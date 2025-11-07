@@ -1,6 +1,6 @@
 import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
-import { Comment, Foro } from "@/types/club"; // Asumimos que Comment y Foro están aquí
+import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
@@ -16,17 +16,14 @@ import {
 } from "react-native";
 import { Socket } from "socket.io-client";
 
-// Definimos los tipos de props del modal
 interface CommentsAnswersProps {
   isVisible: boolean;
   onClose: () => void;
-  // El comentario principal que estamos viendo
   comment: Comment | null;
   socket: Socket | null;
   allForos: Foro[];
 }
 
-// Función auxiliar para obtener iniciales
 const getInitials = (name?: string) =>
   name ? name.charAt(0).toUpperCase() : "?";
 
@@ -41,15 +38,11 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
   const [answers, setAnswers] = useState<Comment[]>([]);
   const [newAnswer, setNewAnswer] = useState("");
   const [isFetching, setIsFetching] = useState(false);
-  // NOTA: no retornamos temprano aquí para que los hooks siempre se ejecuten.
-  // La comprobación de render la haremos justo antes del return JSX.
 
-  // No accedemos a 'comment' hasta confirmar que existe; calculamos valores de forma segura
   const currentForoTitle =
     allForos.find((f) => f._id === comment?.idForo)?.title ||
     "Foro Desconocido";
 
-  // --- LÓGICA DE SOCKET.IO PARA RESPUESTAS ---
   const fetchAnswers = useCallback(() => {
     if (!comment) {
       setIsFetching(false);
@@ -63,47 +56,34 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
     }
 
     setIsFetching(true);
-    // Emitir evento para pedir todos los comentarios del foro; luego filtraremos
+
     socket.emit("all-public-foro", comment.idForo);
-  }, [comment?.idForo, socket]);
+  }, [comment, socket]);
 
   useEffect(() => {
-    // Al abrir el modal, cargamos las respuestas
-    if (isVisible && comment) {
+    if (isVisible && comment && socket) {
       fetchAnswers();
 
-      // Cuando el backend responde con los comentarios del foro
-      const handleForoComments = (data: Comment[] | any) => {
+      const handleComments = (data: Comment[]) => {
         const safe = Array.isArray(data) ? data : [];
         const filtered = safe.filter(
-          (c: Comment) => c.idComent === comment!._id
+          (c: Comment) => c.idComent && c.idComent === comment!._id
         );
         setAnswers(filtered);
         setIsFetching(false);
       };
 
-      // El backend también emite 'coments' tras crear/editar/eliminar; lo usamos para mantener actualizado el hilo
-      const handleAllComments = (data: Comment[] | any) => {
-        const safe = Array.isArray(data) ? data : [];
-        const filtered = safe.filter(
-          (c: Comment) => c.idComent === comment!._id
-        );
-        setAnswers(filtered);
-        setIsFetching(false);
-      };
-
-      socket?.on("coments-in-the-foro", handleForoComments);
-      socket?.on("coments", handleAllComments);
+      socket?.on("coments-in-the-foro", handleComments);
+      socket?.on("coments", handleComments);
 
       return () => {
-        socket?.off("coments-in-the-foro", handleForoComments);
-        socket?.off("coments", handleAllComments);
+        socket?.off("coments-in-the-foro", handleComments);
+        socket?.off("coments", handleComments);
         setIsFetching(false);
       };
     }
   }, [isVisible, fetchAnswers, socket, comment]);
 
-  // --- Manejador de Envío de Respuesta ---
   const handleSendAnswer = () => {
     if (!socket || !socket.connected) {
       Alert.alert("Error", "No hay conexión con el servidor");
@@ -118,19 +98,17 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
     if (!newAnswer.trim()) return;
 
     const answerData = {
-      idForo: comment!.idForo, // ID del foro del comentario original
-      idUser: user._id, // ID del usuario logueado (normalizado por ti)
+      idForo: comment!.idForo,
+      idUser: user._id,
       content: newAnswer.trim(),
     };
 
-    // 3. Emitir evento para crear respuesta, pasando el ID del comentario padre y los datos
     socket.emit("create-answer", comment!._id, answerData);
-    // optimistically add (crear objeto que cumpla la forma de Comment)
     const optimisticAnswer: Comment = {
-      _id: `temp-${Date.now()}`,
+      _id: "",
       idComent: comment!._id,
       idForo: comment!.idForo,
-      idUser: (user as any) || "",
+      idUser: user as any,
       content: answerData.content,
       createdAt: new Date().toISOString(),
     };
@@ -138,8 +116,6 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
     setAnswers((prev) => [optimisticAnswer, ...prev]);
     setNewAnswer("");
   };
-
-  // Función auxiliar para renderizar una respuesta
 
   const AnswerItem: React.FC<{ answer: Comment }> = ({ answer }) => {
     const replyUserName = answer.idUser.userName || "Usuario";
@@ -169,14 +145,11 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      {/* Fondo Oscurecido */}
       <Pressable onPress={onClose} className="flex-1 bg-black/50 justify-end">
-        {/* Contenedor Principal (previene cierre al tocar dentro) */}
         <Pressable
           className="bg-white rounded-t-3xl h-5/6 shadow-xl pt-4"
           onPress={() => {}}
         >
-          {/* Encabezado y Botón de Cierre */}
           <View className="flex-row justify-between items-center px-5 pb-3 border-b border-gray-100">
             <Text className="text-xl font-bold text-gray-800">
               Hilo de: {currentForoTitle}
@@ -187,7 +160,6 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
           </View>
 
           <ScrollView className="flex-1 px-5 pt-3">
-            {/* COMENTARIO PRINCIPAL */}
             {comment && (
               <View className="p-4 bg-indigo-50 rounded-xl mb-4 border border-indigo-200">
                 <Text className="text-sm font-bold text-indigo-600 mb-2">
@@ -223,7 +195,6 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
               />
             )}
 
-            {/* LISTA DE RESPUESTAS */}
             {!isFetching && answers.length > 0
               ? answers.map((answer) => (
                   <AnswerItem key={answer._id} answer={answer} />
@@ -235,7 +206,6 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({
                 )}
           </ScrollView>
 
-          {/* INPUT PARA RESPONDER (fijado abajo) */}
           <View className="p-3 border-t border-gray-200 bg-white">
             <View className="flex-row items-center bg-gray-100 rounded-full p-1 shadow-md">
               <TextInput
