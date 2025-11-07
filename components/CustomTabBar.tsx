@@ -73,6 +73,8 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     }
   };
 
+  
+
   return (
     <View style={styles.tabBarContainer}>
       {/* Fondo con gradiente sutil */}

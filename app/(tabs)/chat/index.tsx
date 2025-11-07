@@ -32,7 +32,7 @@ const generateId = () =>
 
 export default function ChatScreen() {
   const { user } = useContext(authContext);
-  
+
   const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -46,7 +46,8 @@ export default function ChatScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+      const hola = navigation.getParent();
+      console.log(hola);
 
       return () =>
         navigation.getParent()?.setOptions({
@@ -116,28 +117,43 @@ export default function ChatScreen() {
     inputRef.current?.blur();
 
     try {
-      console.log(text);
       const res = await Promise.race([
-
         chat(text, sessionId),
         new Promise((_, r) =>
           setTimeout(() => r({ message: "Timeout" }), 12000)
         ),
       ]);
 
+      // Nueva versión de extract que maneja arrays y objetos anidados
       const extract = (d: any): string | null => {
         if (!d) return null;
         if (typeof d === "string") return d;
+
+        // Si la respuesta es un array, toma el primer elemento
+        if (Array.isArray(d) && d.length > 0) {
+          return extract(d[0]);
+        }
+
+        // Si es un objeto, busca claves típicas o recorre en profundidad
         if (typeof d === "object") {
-          for (const k in d) {
-            if (typeof d[k] === "string") return d[k];
+          if (typeof d.text === "string") return d.text;
+          if (typeof d.reply === "string") return d.reply;
+          if (typeof d.message === "string") return d.message;
+          if (typeof d.content === "string") return d.content;
+
+          // Recursión por si hay objetos anidados
+          for (const key in d) {
+            const val = d[key];
+            const found = extract(val);
+            if (found) return found;
           }
         }
+
         return null;
       };
 
-      let botText = extract(res) || "No entendí bien. Probá otra vez.";
-      console.log("b", botText);
+      const botText = extract(res) || "No entendí bien. Probá otra vez.";
+      console.log("Texto del bot:", botText);
 
       setMessages((prev) => [
         ...prev,
@@ -225,7 +241,7 @@ export default function ChatScreen() {
                 <Text style={m.isUser ? styles.userText : styles.aiText}>
                   {m.content}
                 </Text>
-                <Text style={styles.timeUser}>
+                <Text style={m.isUser ? styles.timeUser : styles.time}>
                   {m.timestamp.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -238,14 +254,13 @@ export default function ChatScreen() {
                   {user?.avatar?.avatars?.url_secura ? (
                     <Image
                       source={{ uri: user.avatar.avatars.url_secura }}
-                      style={styles.avatarUser} 
+                      style={styles.avatarUser}
                       resizeMode="cover"
                     />
                   ) : (
-                   
                     <View style={styles.avatarUser}>
-                  <Ionicons name="person-circle" size={22} color="#fff" />
-                </View>
+                      <Ionicons name="person-circle" size={22} color="#fff" />
+                    </View>
                   )}
                 </View>
               )}
@@ -346,7 +361,7 @@ const styles = StyleSheet.create({
 
   aiText: { color: "#333", fontSize: 15 },
   userText: { color: "#fff", fontSize: 15 },
-  time: { fontSize: 10, color: "#888", marginTop: 4, textAlign: "right" },
+  time: { fontSize: 10, color: "#333", marginTop: 4, textAlign: "right" },
   timeUser: { fontSize: 10, color: "#fff", marginTop: 4, textAlign: "right" },
 
   typingDots: { flexDirection: "row", gap: 4 },

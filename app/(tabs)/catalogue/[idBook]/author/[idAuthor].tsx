@@ -1,4 +1,4 @@
-import { getAuthorById } from "@/app/api/author";
+import { getAuthorById, getBooksByAuthor } from "@/app/api/author";
 import { AuthorType } from "@/types/author";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
@@ -6,17 +6,19 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  SafeAreaView,
+
   ScrollView,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Author() {
   const { idAuthor } = useLocalSearchParams<{ idAuthor: string }>();
   const [author, setAuthor] = useState<AuthorType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [books, setBooks] = useState([]);
 
   useEffect(() => {
     const fetchAuthor = async () => {
@@ -39,6 +41,19 @@ export default function Author() {
     };
 
     fetchAuthor();
+  }, [idAuthor]);
+
+  useEffect(() => {
+    const getBooks = async () => {
+      try {
+        const data = await getBooksByAuthor(idAuthor as string);
+        setBooks(data);
+      } catch (error) {
+        console.error("Error al obtener libros del autor:", error);
+      }
+    }
+    getBooks()
+    
   }, [idAuthor]);
 
   if (loading) {
@@ -170,6 +185,13 @@ export default function Author() {
           <Text className="text-base text-gray-600 leading-relaxed">
             {author.biography || "Biografía no disponible."}
           </Text>
+        </View>
+         <View className="mx-6 mb-6 p-4 bg-white rounded-xl shadow-sm">
+          <Text className="font-semibold text-xl mb-3 text-gray-800">
+            Sus Obras
+          </Text>
+          
+  
         </View>
       </ScrollView>
     </SafeAreaView>
