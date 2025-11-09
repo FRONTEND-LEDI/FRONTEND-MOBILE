@@ -1,13 +1,13 @@
-import chatLogo from "@/assets/images/LOGO.png";
 import { CustomTabBar } from "@/components/CustomTabBar";
+import IAFAB from "@/components/IAFAB";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs, useSegments } from "expo-router";
-import { Image } from "react-native";
+import React from "react";
+import { TouchableOpacity, View } from "react-native";
 
 export default function TabsLayout() {
   const segments = useSegments() as string[];
 
-  // Verifica si estamos en la ruta 'chat' (que corresponde a chat/index)
   const isChatScreen = segments.includes("chat");
 
   return (
@@ -22,7 +22,7 @@ export default function TabsLayout() {
           backgroundColor: "#D97706",
           borderTopWidth: 0,
           height: 80,
-          display: isChatScreen ? "none" : "flex", // 👈 Aquí se oculta solo en chat
+          display: isChatScreen ? "none" : "flex",
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -33,51 +33,53 @@ export default function TabsLayout() {
         name="home/index"
         options={{
           title: "",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="home" size={size} color={color} />,
         }}
-      />
+      />{" "}
       <Tabs.Screen
         name="catalogue"
         options={{
           title: "",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="book" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="book" size={size} color={color} />,
         }}
-      />
+      />{" "}
       <Tabs.Screen
-        name="chat/index"
+        name="IA"
         options={{
           title: "",
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={chatLogo}
-              style={{
-                width: size * 1.5,
-                height: size * 1.5,
-              }}
-            />
+          tabBarIcon: () => <IAFAB />,
+          tabBarButton: (props) => (
+            <View style={{ top: -20, flex: 1 }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+                onPress={props.onPress}
+              >
+                <IAFAB />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
+      {/*       <Tabs.Screen
+        name="chat/quiz"
+        options={{ title: "Quiz IA", href: null, headerShown: false }}
+      /> */}
       <Tabs.Screen
         name="club/index"
         options={{
           title: "",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="people" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="people" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile/index"
         options={{
           title: "",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="person" size={size} color={color} />,
         }}
       />
     </Tabs>
