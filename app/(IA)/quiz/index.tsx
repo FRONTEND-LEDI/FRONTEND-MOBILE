@@ -6,6 +6,15 @@ export class index extends Component {
     return (
       <View>
         <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
+        <Text>index</Text>
       </View>
     );
   }

@@ -16,6 +16,7 @@ const IAFAB = () => {
   const scale = useSharedValue(0);
   const rotation = useSharedValue(0);
 
+  // ... (animaciones sin cambios) ...
   const chatStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     bottom: withSpring(scale.value * (CHAT_SIZE + 15) * 1.5, {
@@ -50,17 +51,21 @@ const IAFAB = () => {
       rotation.value = withTiming(0);
     }
   };
+  // ... (fin animaciones) ...
 
   const handleNavigation = (path: string) => {
     toggleMenu();
+    // Usamos rutas absolutas
     router.push(path as never);
   };
 
   return (
     <View style={{ alignItems: "center", justifyContent: "center" }}>
+      {/* 1. Botón 'Quiz' */}
       <Animated.View style={[quizStyle, { position: "absolute" }]}>
         <TouchableOpacity
-          onPress={() => handleNavigation("(IA)/quiz/index")}
+          // RUTA CORREGIDA: Apunta a la ruta absoluta
+          onPress={() => handleNavigation("/(IA)/quiz")}
           style={{
             width: CHAT_SIZE * 0.7,
             height: CHAT_SIZE * 0.7,
@@ -75,9 +80,11 @@ const IAFAB = () => {
         </TouchableOpacity>
       </Animated.View>
 
+      {/* 2. Botón 'Chatbot' */}
       <Animated.View style={[chatStyle, { position: "absolute" }]}>
         <TouchableOpacity
-          onPress={() => handleNavigation("/(IA)/chat/index")}
+          // RUTA CORREGIDA: Apunta a la ruta absoluta
+          onPress={() => handleNavigation("/(IA)/chat")}
           style={{
             width: CHAT_SIZE * 0.7,
             height: CHAT_SIZE * 0.7,
@@ -92,6 +99,7 @@ const IAFAB = () => {
         </TouchableOpacity>
       </Animated.View>
 
+      {/* 3. Botón Principal (Toggle) */}
       <TouchableOpacity
         onPress={toggleMenu}
         style={{
