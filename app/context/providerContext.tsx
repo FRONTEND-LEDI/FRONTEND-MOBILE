@@ -24,10 +24,12 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
             authorization: `Bearer ${token}`,
           },
         });
+        const responseData = await res.json();
+        const userData = responseData.result;
 
         const data = await res.json();
 
-        console.log("daata", data);
+        console.log("daata", userData );
 
         // Guardamos los datos del usuario en el contexto
         setUser(data.result);
@@ -44,8 +46,6 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     getData();
   }, []);
-
-  
 
   const logout = async () => {
     await SecureStore.deleteItemAsync("token");

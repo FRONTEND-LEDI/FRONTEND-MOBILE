@@ -2,7 +2,7 @@ import { getForosApi } from "@/app/api/club";
 import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
-import { Comentario, Foro } from "@/types/club";
+import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStorage from "expo-secure-store";
 import React, {
@@ -22,21 +22,23 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { io, Socket } from "socket.io-client";
+import DisplayedComment from "../../../components/club/_DisplayComments";
+import CommentsAnswers from "../../../components/club/CommentsAnswers";
 import ForoTopics from "../../../components/ForoButton";
-import DisplayedComment from "../../../components/club/_DisplayComment";
 
 const URL = `http://${IP_ADDRESS}:3402`;
 
 export default function Forum() {
   const [foros, setForos] = useState<Foro[]>([]);
-  const [displayedComment, setDisplayedComment] = useState<Comentario[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [displayedComment, setDisplayedComment] = useState<Comment[]>([]);
   const [selectedForoId, setSelectedForoId] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
-  const { user } = useContext(authContext);
+  const { user, isLoading } = useContext(authContext);
   const socketRef = useRef<Socket | null>(null);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const fetchComments = useCallback((foroId: string | null) => {
     const currentSocket = socketRef.current;
     if (!currentSocket) return;
@@ -62,12 +64,11 @@ export default function Forum() {
 
       currentSocket.on("connect", () => {
         console.log("Connected to Socket.IO server!", currentSocket.id);
-        setIsConnected(true);
         fetchComments(null);
       });
-      currentSocket.on("disconnect", () => setIsConnected(false));
+      currentSocket.on("disconnect", () => console.log("disconn :("));
 
-      currentSocket.on("coments", (data: Comentario[]) => {
+      currentSocket.on("coments", (data: Comment[]) => {
         try {
           const safeData = Array.isArray(data) ? data : [];
           if (!selectedForoId) {
@@ -77,18 +78,24 @@ export default function Forum() {
           console.error("Error socket get comments", error);
         }
       });
-      currentSocket.on("coments-in-the-foro", (data: Comentario[]) => {
+      currentSocket.on("coments-in-the-foro", (data: Comment[]) => {
         const safeData = Array.isArray(data) ? data : [];
         setDisplayedComment([...safeData].reverse());
       });
-      currentSocket.on("coment-created", (newComment: Comentario) => {
+      currentSocket.on("coment-created", (newComment: Comment) => {
         if (!selectedForoId || selectedForoId === newComment.idForo) {
           setDisplayedComment((prev) => [newComment, ...prev]);
         }
-      });
+        currentSocket.on("update", (data: Comment[]) => {
+          setDisplayedComment([...data].reverse());
+        });
 
-      currentSocket.on("error", (error: { msg: string }) => {
-        console.error("Socket.IO error:", error.msg);
+        currentSocket.on("Delete", (data: Comment[]) => {
+          setDisplayedComment([...data].reverse());
+        });
+        currentSocket.on("error", (error: { msg: string }) => {
+          console.error("Socket.IO error:", error.msg);
+        });
       });
 
       const cleanup = () => {
@@ -97,10 +104,11 @@ export default function Forum() {
         currentSocket.off("coments");
         currentSocket.off("coments-in-the-foro");
         currentSocket.off("coment-created");
+        currentSocket.off("update");
+        currentSocket.off("Delete");
         currentSocket.off("error");
         currentSocket.disconnect();
         socketRef.current = null;
-        setIsConnected(false);
         console.log("Disconnecting socket");
       };
 
@@ -119,11 +127,10 @@ export default function Forum() {
     };
     loadForos();
 
-    // Asegurar que la función de limpieza se ejecute al desmontar
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
-  }, [selectedForoId]);
+  }, [selectedForoId, fetchComments]);
 
   const handleTopicPress = (foroId: string) => {
     setSelectedForoId(foroId);
@@ -136,104 +143,124 @@ export default function Forum() {
   };
 
   const handleSendComment = () => {
-    try {
-      const currentSocket = socketRef.current;
-      if (!currentSocket || !currentSocket.connected) {
-        console.warn("Socket no conectado, no se pudo enviar el comentario");
-        return;
-      }
-      const userId = user?.id;
-      if (!userId) {
-        Alert.alert("Acceso denegado", "No se pudo enviar comentario");
-        return;
-      }
-      if (selectedForoId && newComment.trim()) {
-        const commentData = {
-          idForo: selectedForoId,
-          idUser: userId,
-          content: newComment,
-        };
-        currentSocket.emit("new-public", commentData);
-        setNewComment("");
-      }
-    } catch (error) {
-      console.log("Error al enviar comentario", error);
+    const currentSocket = socketRef.current;
+    if (!currentSocket || !currentSocket.connected) {
+      Alert.alert("Error", "No hay conexión con el servidor");
+      return;
+    }
+
+    if (isLoading) {
+      Alert.alert("Espere", "Verificando sesión...");
+      return;
+    }
+
+    if (!user) {
+      Alert.alert("Acceso denegado", "Inicia sesión para poder comentar");
+      return;
+    }
+
+    if (selectedForoId && newComment.trim()) {
+      const commentData = {
+        idForo: selectedForoId,
+        idUser: user._id,
+        content: newComment,
+      };
+      currentSocket.emit("new-public", commentData);
+      setNewComment("");
     }
   };
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-white">
-      <ScrollView
-        contentContainerStyle={{
-          paddingBottom: 120,
-          paddingHorizontal: 5,
-          paddingTop: 30,
-        }}
-        className="flex-1 px-6"
-      >
-        <ForoTopics
-          foros={foros}
-          selectedForoId={selectedForoId}
-          onTopicPress={handleTopicPress}
-          onGetAllComments={handleGetAllComments}
-        />
-        <Text
-          className="text-xl font-bold mt-5 mb-3"
-          style={{ color: colors.primary }}
+      <GestureHandlerRootView>
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: 120,
+            paddingHorizontal: 5,
+            paddingTop: 30,
+          }}
+          className="flex-1 px-6"
         >
-          {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
-        </Text>
-
-        {displayedComment.map((comment) => (
-          <DisplayedComment
-            key={comment._id || comment.idComent}
-            comment={comment}
+          <ForoTopics
             foros={foros}
+            selectedForoId={selectedForoId}
+            onTopicPress={handleTopicPress}
+            onGetAllComments={handleGetAllComments}
           />
-        ))}
+          <Text
+            className="text-xl font-bold mt-5 mb-3"
+            style={{ color: colors.primary }}
+          >
+            {selectedForoId ? "Comentarios del Foro" : "Todos los comentarios"}
+          </Text>
 
-        {displayedComment.length === 0 && (
-          <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
-            <Text className="text-base text-gray-500 font-medium">
-              No hay comentarios en este tema. ¡Sé el primero en escribir!
+          {displayedComment.map((comment) => (
+            <DisplayedComment
+              key={comment._id}
+              comment={comment}
+              foros={foros}
+              socket={socketRef.current}
+              onViewThread={(c) => {
+                setSelectedComment(c);
+                setModalVisible(true);
+              }}
+            />
+          ))}
+
+          {displayedComment.length === 0 && (
+            <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
+              <Text className="text-base text-gray-500 font-medium">
+                No hay comentarios en este tema. ¡Sé el primero en escribir!
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {selectedForoId ? (
+          <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+            <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
+              <TextInput
+                className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
+                placeholder={`Comentar en: ${
+                  foros.find((f) => f._id === selectedForoId)?.title ||
+                  "Foro Seleccionado"
+                }...`}
+                placeholderTextColor="#9ca3af"
+                value={newComment}
+                onChangeText={setNewComment}
+                editable={!!selectedForoId}
+              />
+              <TouchableOpacity
+                className={`rounded-full p-2 ml-2 ${
+                  newComment.trim() ? "bg-orange-500" : "bg-gray-300"
+                }`}
+                onPress={handleSendComment}
+                disabled={!newComment.trim()}
+              >
+                <Ionicons name="arrow-up" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View className="bg-gray-100 p-4 rounded-xl mx-4 mb-4 items-center justify-center border border-gray-200">
+            <Text className="text-base text-gray-500 text-center font-medium">
+              Selecciona un tema para participar
             </Text>
           </View>
         )}
-      </ScrollView>
+        <CommentsAnswers
+          isVisible={modalVisible}
+          onClose={() => {
+            setModalVisible(false);
+            setSelectedComment(null);
+          }}
+          comment={selectedComment}
+          socket={socketRef.current}
+          allForos={foros}
+        />
 
-      {selectedForoId ? (
-        <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
-          <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
-            <TextInput
-              className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
-              placeholder={`Comentar en: ${
-                foros.find((f) => f._id === selectedForoId)?.title ||
-                "Foro Seleccionado"
-              }...`}
-              placeholderTextColor="#9ca3af"
-              value={newComment}
-              onChangeText={setNewComment}
-              editable={!!selectedForoId}
-            />
-            <TouchableOpacity
-              className={`rounded-full p-2 ml-2 ${
-                newComment.trim() ? "bg-orange-500" : "bg-gray-300"
-              }`}
-              onPress={handleSendComment}
-              disabled={!newComment.trim()}
-            >
-              <Ionicons name="arrow-up" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        <View className="bg-gray-100 p-4 rounded-xl mx-4 mb-4 items-center justify-center border border-gray-200">
-          <Text className="text-base text-gray-500 text-center font-medium">
-            Selecciona un tema para participar
-          </Text>
-        </View>
-      )}
-      <StatusBar backgroundColor={colors.primary} />
+        <StatusBar backgroundColor={colors.primary} />
+      </GestureHandlerRootView>
     </KeyboardAvoidingView>
   );
 }

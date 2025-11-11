@@ -5,14 +5,15 @@ export type Foro = {
 };
 export type CommentUser = {
   _id: string;
-  userName?: string;
+  userName: string;
+  avatar?: string;
 };
 
-export type Comentario = {
+export type Comment = {
   _id: string;
   idComent?: string;
   idForo: string;
-  idUser: string | CommentUser;
+  idUser: CommentUser;
   content: string;
   createdAt?: string;
 };
