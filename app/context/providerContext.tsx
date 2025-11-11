@@ -27,12 +27,7 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
         const responseData = await res.json();
         const userData = responseData.result;
 
-        const data = await res.json();
-
-        console.log("daata", userData );
-
-        // Guardamos los datos del usuario en el contexto
-        setUser(data.result);
+        setUser(userData);
         setIsLogin(true);
       } catch (error) {
         console.error("Error al verificar sesión:", error);
