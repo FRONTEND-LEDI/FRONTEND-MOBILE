@@ -81,6 +81,13 @@ export default function Home() {
     );
   }
 
+  const handleBookPress = (book: any) => {
+    router.navigate({
+      pathname: '/(tabs)/catalogue/[idBook]',
+      params: { idBook: book._id }
+    });
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView
@@ -129,9 +136,7 @@ export default function Home() {
               </View>
               <BookCarousel
                 data={booksLatest}
-                onPressItem={(book) => {
-                  if (book?._id) router.navigate(`/(tabs)/catalogue/${book._id}`);
-                }}
+                onPressItem={handleBookPress}
               />
             </View>
           ) : (
@@ -154,9 +159,8 @@ export default function Home() {
               </View>
               <BookCarousel
                 data={recommendations}
-                onPressItem={(book) => {
-                  if (book?._id) router.navigate(`/(tabs)/catalogue/${book._id}`);
-                }}
+                onPressItem={handleBookPress}
+                
               />
             </View>
           )}
@@ -170,9 +174,8 @@ export default function Home() {
               </View>
               <BookCarousel
                 data={books}
-                onPressItem={(book) => {
-                  if (book?._id) router.navigate(`/(tabs)/catalogue/${book._id}`);
-                }}
+                onPressItem={handleBookPress}
+               
               />
             </View>
           )}
