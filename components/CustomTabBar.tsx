@@ -3,13 +3,11 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  // Crear referencias para las animaciones
   const scaleAnimations = useRef(state.routes.map(() => new Animated.Value(1))).current;
   const opacityAnimations = useRef(state.routes.map(() => new Animated.Value(1))).current;
   const floatingScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Animación inicial del botón flotante
     Animated.sequence([
       Animated.delay(300),
       Animated.timing(floatingScale, {
@@ -25,7 +23,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [floatingScale]);
 
   const handlePress = (index: number, routeName: string) => {
     const event = navigation.emit({
@@ -35,7 +33,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     });
 
     if (!event.defaultPrevented) {
-      // Animación de pulsación
       Animated.sequence([
         Animated.timing(scaleAnimations[index], {
           toValue: 0.8,
@@ -77,31 +74,18 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
   return (
     <View style={styles.tabBarContainer}>
-      {/* Fondo con gradiente sutil */}
       <View style={styles.backgroundOverlay} />
-      
+
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label = options.tabBarLabel ?? options.title ?? route.name;
         const isFocused = state.index === index;
         const isMiddle = index === 2;
 
-        // Renderizar el botón central flotante con mejoras
         if (isMiddle) {
           return (
-            <TouchableOpacity
-              key={route.key}
-              onPress={() => handlePress(index, route.name)}
-              style={styles.floatingButtonContainer}
-              activeOpacity={0.9}
-            >
-              <Animated.View 
-                style={[
-                  styles.floatingButton,
-                  isFocused && styles.floatingButtonActive,
-                  { transform: [{ scale: floatingScale }] }
-                ]}
-              >
+            <View key={route.key} style={styles.floatingButtonContainer}>
+              <Animated.View style={[styles.floatingButton, isFocused && styles.floatingButtonActive, { transform: [{ scale: floatingScale }] }]}>
                 <View style={styles.floatingButtonInner}>
                   {options.tabBarIcon?.({
                     focused: isFocused,
@@ -109,57 +93,45 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                     size: 28,
                   })}
                 </View>
-                {/* Efecto de brillo */}
                 {isFocused && <View style={styles.floatingGlow} />}
               </Animated.View>
-              
-              {/* Etiqueta para el botón flotante */}
+
               <Animated.Text
                 style={[
                   styles.floatingTabLabel,
-                  { 
+                  {
                     color: isFocused ? "#FFFFFF" : "rgba(255,255,255,0.7)",
-                    opacity: opacityAnimations[index]
-                  }
+                    opacity: opacityAnimations[index],
+                  },
                 ]}
               >
                 {label as string}
               </Animated.Text>
-            </TouchableOpacity>
+            </View>
           );
         }
 
         // Renderizar los demás botones normales con mejoras
         return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={() => handlePress(index, route.name)}
-            style={styles.tabButton}
-            activeOpacity={0.7}
-          >
-            <Animated.View 
-              style={[
-                styles.tabIconContainer,
-                { transform: [{ scale: scaleAnimations[index] }] }
-              ]}
-            >
+          <TouchableOpacity key={route.key} onPress={() => handlePress(index, route.name)} style={styles.tabButton} activeOpacity={0.7}>
+            <Animated.View style={[styles.tabIconContainer, { transform: [{ scale: scaleAnimations[index] }] }]}>
               {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? "#FFFFFF" : "rgba(255,255,255,0.7)",
                 size: 24,
               })}
-              
+
               {/* Indicador activo */}
               {isFocused && <View style={styles.activeDot} />}
             </Animated.View>
-            
+
             <Animated.Text
               style={[
                 styles.tabLabel,
-                { 
+                {
                   color: isFocused ? "#FFFFFF" : "rgba(255,255,255,0.7)",
-                  opacity: opacityAnimations[index]
-                }
+                  opacity: opacityAnimations[index],
+                },
               ]}
             >
               {label as string}
