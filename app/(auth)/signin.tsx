@@ -42,7 +42,7 @@ export default function LoginScreen() {
       }
 
       await SecureStorage.setItemAsync("token", res.token);
-      const userReq = await fetch(`http://${URI}/oneUser`, {
+      const userReq = await fetch(`http://${URI}/getUser`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${res.token}`,

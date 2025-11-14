@@ -70,6 +70,8 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     }
   };
 
+  
+
   return (
     <View style={styles.tabBarContainer}>
       <View style={styles.backgroundOverlay} />

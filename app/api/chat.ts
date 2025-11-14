@@ -3,9 +3,9 @@ import { ApiError, Memory } from "@/types/chat";
 import * as SecureStore from "expo-secure-store";
 
 // Timeout para requests (8 segundos)
-const REQUEST_TIMEOUT = 1000000
+const REQUEST_TIMEOUT = 1000000000
 
-async function getToken(): Promise<string> {
+export async function getToken(): Promise<string> {
   const token = await SecureStore.getItemAsync("token");
   if (!token) {
     throw new Error("No se encontró token. Inicia sesión.");
@@ -59,7 +59,7 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeout: numb
 export const chat = async (message: string, sessionId: string): Promise<any> => {
   try {
     const token = await getToken();
-    const response = await fetchWithTimeout(`http://${URI}/chat`, {
+    const response = await fetch(`http://${URI}/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -75,17 +75,7 @@ export const chat = async (message: string, sessionId: string): Promise<any> => 
     return await handleFetchResponse(response);
   } catch (error) {
     console.error("Error en chat:", error);
-    
-    if (error instanceof Error) {
-      if (error.message.includes("Timeout")) {
-        throw { message: "La solicitud tardó demasiado. Revisa tu conexión." };
-      }
-      if (error.message.includes("Network request failed")) {
-        throw { message: "Error de conexión. Verifica tu internet." };
-      }
-    }
-    
-    throw error;
+    throw error ;
   }
 };
 

@@ -1,21 +1,23 @@
 import { createContext } from "react";
 
 export type UserType = {
-  _id: string;
-  name: string;
-  lastName: string;
-  userName: string;
+   _id?: string;
+  name?: string;
+  lastName?: string;
+  userName?: string;
   birthDate?: string;
   email: string;
   password?: string;
   nivel?: string;
   rol?: string;
+  points?: number;
   avatar?: null | {
     _id?: string;
     gender?: "female" | "male" | "other" | string;
     __v?: number;
     avatars?: {
       url_secura?: string;
+      id_image?: string;
     };
   };
   preference?: {
