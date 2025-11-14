@@ -18,19 +18,13 @@ const IAFAB = () => {
 
   const chatStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    bottom: withSpring(scale.value * (CHAT_SIZE + 15) * 1.5, {
-      stiffness: 100,
-      damping: 10,
-    }),
+    bottom: withSpring(scale.value * (CHAT_SIZE + 15) * 1.5),
     opacity: withTiming(scale.value, { duration: 200 }),
   }));
 
   const quizStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    bottom: withSpring(scale.value * (CHAT_SIZE + 15) * 2.5, {
-      stiffness: 100,
-      damping: 10,
-    }),
+    bottom: withSpring(scale.value * (CHAT_SIZE + 15) * 2.5),
     opacity: withTiming(scale.value, { duration: 200 }),
   }));
 
