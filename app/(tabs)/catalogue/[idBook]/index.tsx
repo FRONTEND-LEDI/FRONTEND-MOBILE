@@ -12,6 +12,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   Dimensions,
@@ -54,6 +55,12 @@ export default function BookProps() {
         }
       };
       fetchBook();
+
+      return () => {
+        setBook(null);
+        setLoading(true);
+        setError(null);
+      };
     }, [idBook])
   );
 
@@ -125,13 +132,14 @@ export default function BookProps() {
   }
 };
 
-  useEffect(() => {
+  /*useLayoutEffect(() => {
+    console.log('entró', book)
     return () => {
       setBook(null);
       setLoading(true);
       setError(null);
     };
-  }, []);
+  }, []);*/
 
   if (loading) {
     return (

@@ -1,4 +1,5 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -6,6 +7,8 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   const scaleAnimations = useRef(state.routes.map(() => new Animated.Value(1))).current;
   const opacityAnimations = useRef(state.routes.map(() => new Animated.Value(1))).current;
   const floatingScale = useRef(new Animated.Value(1)).current;
+
+  const router = useRouter();
 
   useEffect(() => {
     Animated.sequence([
@@ -25,7 +28,9 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     ]).start();
   }, [floatingScale]);
 
-  const handlePress = (index: number, routeName: string) => {
+  const handlePress = (index: number, routeName: string | any) => {
+    console.log('presionado', routeName);
+
     const event = navigation.emit({
       type: "tabPress",
       target: routeName,
@@ -66,7 +71,13 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         ]).start();
       }
 
-      navigation.navigate(routeName);
+      if (routeName === 'catalogue') {
+        router.navigate({
+          pathname: routeName,
+        });
+      } else {
+        navigation.navigate(routeName);
+      }
     }
   };
 

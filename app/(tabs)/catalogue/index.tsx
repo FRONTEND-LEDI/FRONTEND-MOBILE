@@ -272,7 +272,7 @@ export default function Products() {
               renderItem={({ item }) => (
                 <BookCard
                   data={item}
-                  onPress={() => router.push(`../catalogue/${item._id}`)}
+                  onPress={() => router.navigate(`../catalogue/${item._id}`)}
                 />
               )}
             />
