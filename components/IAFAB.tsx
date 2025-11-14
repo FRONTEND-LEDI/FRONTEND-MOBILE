@@ -16,7 +16,6 @@ const IAFAB = () => {
   const scale = useSharedValue(0);
   const rotation = useSharedValue(0);
 
-  // ... (animaciones sin cambios) ...
   const chatStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     bottom: withSpring(scale.value * (CHAT_SIZE + 15) * 1.5, {
