@@ -7,9 +7,7 @@ export const getBooks = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-
       },
-      
     });
 
     if (!response.ok) {
@@ -37,9 +35,7 @@ export const getBookById = async (id: string) => {
       headers: {
         "Content-Type": "application/json",
         "x-client": "mobile",
-
       },
-      
     });
 
     if (!response.ok) {
@@ -63,18 +59,15 @@ export const getBySearch = async (query: string) => {
       throw new Error("No se encontró el token. Inicia sesión nuevamente.");
     }
 
-    const response = await fetch(
-      `http://${URI}/books/${encodeURIComponent(query)}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${token}`,
-          "x-client": "mobile",
-        },
-        credentials: "include",
-      }
-    );
+    const response = await fetch(`http://${URI}/books/${encodeURIComponent(query)}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${token}`,
+        "x-client": "mobile",
+      },
+      credentials: "include",
+    });
 
     // Verificar antes de parsear
     if (!response.ok) {
@@ -92,38 +85,54 @@ export const getBySearch = async (query: string) => {
   }
 };
 
-
-export const  getBooksByFiltering = async (filters: {
-  theme?: string[];
-  subgenre?: string[];
-  yearBook?: string[];
-  format?:string[];
-  genre?:string[]
-})=> {
+export const getBooksByFiltering = async (filters: { theme?: string[]; subgenre?: string[]; yearBook?: string[]; format?: string[]; genre?: string[] }) => {
   try {
     const token = await SecureStore.getItemAsync("token");
-    
 
     if (!token) {
       throw new Error("No se encontró el token. Inicia sesión nuevamente.");
     }
     const response = await fetch(`http://${URI}/booksByFiltering`, {
       method: "POST",
-      headers: { "Content-Type": "application/json",
-      "authorization": `Bearer ${token}`,
-      "x-client": "mobile",
-      },
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}`, "x-client": "mobile" },
       body: JSON.stringify(filters),
     });
 
     if (!response.ok) throw new Error("Error en la petición");
 
-    const data =  response.json();
+    const data = response.json();
 
-    return data
+    return data;
   } catch (error) {
     console.error("Error en getBooksByFiltering:", error);
     return [];
   }
-}
+};
 
+export const getNarrativeBooks = async () => {
+  const token = await SecureStore.getItemAsync("token");
+  if (!token) {
+    throw new Error("No se encontró el token. Inicia sesión nuevamente.");
+  }
+  try {
+    const token = await SecureStore.getItemAsync("token");
+
+    if (!token) {
+      throw new Error("No se encontró el token. Inicia sesión nuevamente.");
+    }
+    const response = await fetch(`http://${URI}/booksByFiltering`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}`, "x-client": "mobile" },
+      body: JSON.stringify({ theme: [], subgenre: [], yearBook: [], genre: ["Narrativo"], format: [] }),
+    });
+
+    if (!response.ok) throw new Error("Error en la petición");
+
+    const data = response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error en getBooksByFiltering:", error);
+    return [];
+  }
+};

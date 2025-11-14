@@ -3,13 +3,11 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  // Crear referencias para las animaciones
   const scaleAnimations = useRef(state.routes.map(() => new Animated.Value(1))).current;
   const opacityAnimations = useRef(state.routes.map(() => new Animated.Value(1))).current;
   const floatingScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Animación inicial del botón flotante
     Animated.sequence([
       Animated.delay(300),
       Animated.timing(floatingScale, {
@@ -35,7 +33,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     });
 
     if (!event.defaultPrevented) {
-      // Animación de pulsación
       Animated.sequence([
         Animated.timing(scaleAnimations[index], {
           toValue: 0.8,
@@ -75,7 +72,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
   return (
     <View style={styles.tabBarContainer}>
-      {/* Fondo con gradiente sutil */}
       <View style={styles.backgroundOverlay} />
 
       {state.routes.map((route, index) => {
@@ -84,11 +80,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         const isFocused = state.index === index;
         const isMiddle = index === 2;
 
-        // Renderizar el botón central flotante con mejoras
         if (isMiddle) {
-          // Render the FAB without the outer Touchable so the inner IAFAB
-          // component can handle its own touches/animation/navigation.
-          // This prevents automatic navigation when the FAB is pressed.
           return (
             <View key={route.key} style={styles.floatingButtonContainer}>
               <Animated.View style={[styles.floatingButton, isFocused && styles.floatingButtonActive, { transform: [{ scale: floatingScale }] }]}>
