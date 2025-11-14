@@ -30,7 +30,7 @@ export interface QuizResponse {
   title: string;
   scenery: string;
   page: number;
-  options: QuizOption[];
+  option: QuizOption[];
   completed?: boolean;
   score?: number;
   totalQuestions?: number;
@@ -131,7 +131,7 @@ const normalizeQuizResponse = (data: any): QuizResponse => {
     title: data.title || "",
     scenery: data.scenery || "",
     page: data.page ?? 1,
-    options: Array.isArray(data.options) ? data.options : [],
+    option: Array.isArray(data.options) ? data.options : [],
     completed: data.completed === true,
     score: typeof data.score === "number" ? data.score : undefined,
     totalQuestions: data.totalQuestions || 0,

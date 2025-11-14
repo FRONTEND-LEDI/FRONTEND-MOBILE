@@ -6,14 +6,32 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const GameHeader = ({ points, bookTitle }: { points: number; bookTitle: string }) => (
-  <View style={{ padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderBottomColor: "#E5E7EB" }}>
-    <Text style={{ fontSize: 18, color: "#9CA3AF" }} numberOfLines={1}>
-      {bookTitle}
-    </Text>
-    <Text style={{ fontSize: 30, fontWeight: "bold", color: colors.primary }}>Puntos: {points}</Text>
-  </View>
-);
+const MAX_LIVES = 2;
+const TOTAL_QUESTIONS = 4;
+
+const GameHeader = ({ points, bookTitle, lives, page }: { points: number; bookTitle: string; lives: number; page: number }) => {
+  const lifeIcons = [];
+  for (let i = 0; i < MAX_LIVES; i++) {
+    lifeIcons.push(<MaterialIcons key={i} name={i < lives ? "favorite" : "favorite-border"} size={24} color={i < lives ? "#EF4444" : "#D1D5DB"} />);
+  }
+
+  return (
+    <View style={{ padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderBottomColor: "#E5E7EB" }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={{ fontSize: 18, color: "#9CA3AF", flex: 1 }} numberOfLines={1}>
+          {bookTitle}
+        </Text>
+        {/* Vidas restantes */}
+        <View style={{ flexDirection: "row", gap: 4 }}>{lifeIcons}</View>
+      </View>
+      <Text style={{ fontSize: 30, fontWeight: "bold", color: colors.primary }}>Puntos: {points}</Text>
+      {/* Progreso de preguntas */}
+      <Text style={{ fontSize: 16, fontWeight: "600", color: "#4B5563", marginTop: 4 }}>
+        Pregunta: {page} / {TOTAL_QUESTIONS}
+      </Text>
+    </View>
+  );
+};
 
 export default function QuizScreen() {
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
@@ -31,6 +49,7 @@ export default function QuizScreen() {
   const [finalScore, setFinalScore] = useState<number>(0);
   const [currentScore, setCurrentScore] = useState(0);
   const [isAnswering, setIsAnswering] = useState(false);
+  const [lives, setLives] = useState(MAX_LIVES);
 
   const initializeQuiz = useCallback(async () => {
     if (!bookId) {
@@ -47,6 +66,8 @@ export default function QuizScreen() {
       setFinalScore(0);
       setSelectedOption(null);
       setShowFeedback(false);
+      setLives(MAX_LIVES);
+      setPage(1);
 
       const bookData = await getBookById(bookId);
       console.log("BOOKDATA", bookData);
@@ -63,10 +84,10 @@ export default function QuizScreen() {
 
       console.log("Respuesta inicial del quiz:", initialResponse);
 
-      if (initialResponse.options && Array.isArray(initialResponse.options) && initialResponse.options.length > 0) {
+      if (initialResponse.option && Array.isArray(initialResponse.option) && initialResponse.option.length > 0) {
         setCurrentQuestion(initialResponse.scenery);
-        setOptions(initialResponse.options);
-        setPage(initialResponse.page);
+        setOptions(initialResponse.option);
+        setPage(initialResponse.page || 1);
       } else {
         throw new Error(`No se recibieron opciones del servidor. Respuesta: ${JSON.stringify(initialResponse)}`);
       }
@@ -87,35 +108,63 @@ export default function QuizScreen() {
     setSelectedOption(option);
   };
 
+  // --- LÓGICA DE RESPUESTA MODIFICADA ---
   const handleConfirmAnswer = async () => {
     if (!selectedOption || !bookId || !book || isAnswering) return;
 
     setIsAnswering(true);
     setShowFeedback(true);
 
+    let newScore = currentScore;
+    let newLives = lives;
+    let gameShouldEnd = false;
+
+    // 1. Manejar puntuación y vidas
     if (selectedOption.status) {
-      setCurrentScore((prev) => prev + 10);
+      newScore += 0;
+      setCurrentScore(newScore);
+    } else {
+      newLives -= 1;
+      setLives(newLives); // <-- REGLA 1: Restar vida
+    }
+
+    // 2. Comprobar condiciones de fin de juego
+    if (newLives <= 0) {
+      gameShouldEnd = true; // Fin por vidas
+    }
+    if (page === TOTAL_QUESTIONS) {
+      gameShouldEnd = true; // <-- REGLA 2: Fin por 4 preguntas
     }
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    if (gameShouldEnd) {
+      setFinalScore(newScore);
+      setQuizCompleted(true);
+      setIsAnswering(false);
+      return;
+    }
 
     try {
       const response = await submitQuizAnswer(bookId, selectedOption.textOption, selectedOption.status, page);
 
       console.log("Respuesta del quiz recibida:", response);
 
-      if (response.completed === true) {
-        setFinalScore(response.score ?? currentScore + (selectedOption.status ? 10 : 0));
+      if (response.completed === true || response.score !== undefined) {
+        // La API dice que terminó (aunque nuestra lógica local ya lo cubre)
+        setFinalScore(response.score ?? newScore);
         setQuizCompleted(true);
-      } else if (response.options && response.options.length > 0) {
+      } else if (response.option && response.option.length > 0) {
+        // Cargar siguiente pregunta
         setCurrentQuestion(response.scenery);
-        setOptions(response.options);
-        setPage(response.page);
+        setOptions(response.option);
+        setPage(response.page); // La API debe enviar la página 2, 3, 4
         setSelectedOption(null);
         setShowFeedback(false);
       } else {
+        // Failsafe por si la API no envía más opciones
         setQuizCompleted(true);
-        setFinalScore(currentScore + (selectedOption.status ? 10 : 0));
+        setFinalScore(newScore);
       }
     } catch (err: any) {
       console.error("Error confirmando respuesta:", err);
@@ -127,6 +176,7 @@ export default function QuizScreen() {
   };
 
   if (loading) {
+    // ... (Vista de Carga - sin cambios)
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F9FAFB" }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -136,6 +186,7 @@ export default function QuizScreen() {
   }
 
   if (error) {
+    // ... (Vista de Error - sin cambios)
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
         <Stack.Screen options={{ title: "Error", headerShown: true }} />
@@ -156,9 +207,11 @@ export default function QuizScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <GameHeader points={currentScore} bookTitle={book?.title || "Quiz"} />
+      {/* --- LLAMADA AL HEADER MODIFICADO --- */}
+      <GameHeader points={currentScore} bookTitle={book?.title || "Quiz"} lives={lives} page={page} />
 
       {quizCompleted ? (
+        // ... (Vista de Quiz Completado - sin cambios)
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>🎉</Text>
           <Text style={{ fontSize: 30, fontWeight: "bold", color: "#1F2937", marginBottom: 8 }}>¡Quiz Completado!</Text>
@@ -187,6 +240,7 @@ export default function QuizScreen() {
           </TouchableOpacity>
         </View>
       ) : (
+        // ... (Vista de Pregunta Activa - sin cambios)
         <ScrollView style={{ flex: 1 }}>
           <View style={{ padding: 20 }}>
             <View style={{ backgroundColor: "#FEF3C7", padding: 24, borderRadius: 16, marginBottom: 24, borderWidth: 1, borderColor: "#FDE68A" }}>
@@ -220,7 +274,14 @@ export default function QuizScreen() {
                 }
 
                 if (showFeedback && !isSelected) {
-                  opacity = 0.5;
+                  if (!option.status) {
+                    opacity = 0.5;
+                  }
+                  if (option.status) {
+                    backgroundColor = "#22C55E";
+                    borderColor = "#16A34A";
+                    textColor = "white";
+                  }
                 }
 
                 return (
