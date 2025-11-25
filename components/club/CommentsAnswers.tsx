@@ -3,7 +3,7 @@ import colors from "@/constants/colors";
 import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Socket } from "socket.io-client";
 
 interface CommentsAnswersProps {
@@ -97,7 +97,7 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
   };
 
   const AnswerItem: React.FC<{ answer: Comment }> = ({ answer }) => {
-    const replyUserName = answer.idUser.userName || "Usuario";
+    const replyUserName = (typeof answer.idUser === 'object' && answer.idUser?.userName) || "Usuario";
     return (
       <View key={answer._id} className="py-3 border-b border-gray-100">
         <View className="flex-row items-start">
@@ -117,57 +117,60 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
     <Modal transparent visible={isVisible} animationType="slide" onRequestClose={onClose}>
       <Pressable onPress={onClose} className="flex-1 bg-black/50 justify-end">
         <Pressable className="bg-white rounded-t-3xl h-5/6 shadow-xl pt-4" onPress={() => {}}>
-          <View className="flex-row justify-between items-center px-5 pb-3 border-b border-gray-100">
-            <Text className="text-xl font-bold text-gray-800">Hilo de: {currentForoTitle}</Text>
-            <TouchableOpacity onPress={onClose} className="p-2">
-              <Ionicons name="close" size={28} color="#333" />
-            </TouchableOpacity>
-          </View>
+          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+            <View className="flex-row justify-between items-center px-5 pb-3 border-b border-gray-100">
+              <Text className="text-xl font-bold text-gray-800">Hilo de: {currentForoTitle}</Text>
+              <TouchableOpacity onPress={onClose} className="p-2">
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
 
-          <ScrollView className="flex-1 px-5 pt-3">
-            {comment && (
-              <View className="p-4 bg-indigo-50 rounded-xl mb-4 border border-indigo-200">
-                <Text className="text-sm font-bold text-indigo-600 mb-2">Publicación Original</Text>
-                <View className="flex-row items-start">
-                  <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
-                    <Text className="text-sm font-bold text-white">{getInitials(comment.idUser.userName)}</Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="font-bold text-sm mb-0.5">{comment.idUser.userName || "Usuario"}</Text>
-                    <Text className="text-base text-gray-800">{comment.content}</Text>
+            <ScrollView className="flex-1 px-5 pt-3">
+              {comment && (
+                <View className="p-4 bg-indigo-50 rounded-xl mb-4 border border-indigo-200">
+                  <Text className="text-sm font-bold text-indigo-600 mb-2">Publicación Original</Text>
+                  <View className="flex-row items-start">
+                    <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
+                      <Text className="text-sm font-bold text-white">{getInitials(typeof comment.idUser === 'object' ? comment.idUser?.userName : "")}</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-bold text-sm mb-0.5">{(typeof comment.idUser === 'object' ? comment.idUser?.userName : "Usuario")}</Text>
+                      <Text className="text-base text-gray-800">{comment.content}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            <Text className="text-lg font-bold mt-2 mb-3 text-gray-700">Respuestas ({answers.length})</Text>
+              <Text className="text-lg font-bold mt-2 mb-3 text-gray-700">Respuestas ({answers.length})</Text>
 
-            {isFetching && <ActivityIndicator size="large" color={colors.primary} className="mt-5" />}
+              {isFetching && <ActivityIndicator size="large" color={colors.primary} className="mt-5" />}
 
-            {!isFetching && answers.length > 0
-              ? answers.map((answer) => <AnswerItem key={answer._id} answer={answer} />)
-              : !isFetching && <Text className="text-center text-gray-500 mt-5">Sé el primero en responder.</Text>}
-          </ScrollView>
+              {!isFetching && answers.length > 0
+                ? answers.map((answer) => <AnswerItem key={answer._id} answer={answer} />)
+                : !isFetching && <Text className="text-center text-gray-500 mt-5">Sé el primero en responder.</Text>}
+            </ScrollView>
 
-          <View className="p-3 border-t border-gray-200 bg-white">
-            <View className="flex-row items-center bg-gray-100 rounded-full p-1 shadow-md">
-              <TextInput
-                className="flex-1 min-h-[40px] max-h-32 bg-white rounded-2xl px-4 py-2 text-base border border-gray-300 mr-2"
-                placeholder={`Responder a ${comment?.idUser.userName || "Usuario"}...`}
-                value={newAnswer}
-                onChangeText={setNewAnswer}
-                multiline
-                editable={!isAuthLoading}
-              />
+            <View className="p-3 border-t border-gray-200 bg-white flex-row items-center">
+                <TextInput
+                  className="flex-1 bg-gray-100 rounded-full py-2.5 px-3.5 text-base"
+                  style={{ maxHeight: 120 }}
+                  placeholder={`Responder a ${(typeof comment?.idUser === 'object' ? comment?.idUser?.userName : "Usuario")}...`}
+                  value={newAnswer}
+                  onChangeText={setNewAnswer}
+                  multiline
+                  editable={!isAuthLoading}
+                />
               <TouchableOpacity
-                className={`w-10 h-10 rounded-full justify-center items-center ${newAnswer.trim() && !isAuthLoading ? "bg-green-500" : "bg-gray-400"}`}
+                className={`w-11 h-11 rounded-full ml-2.5 justify-center items-center ${
+                  newAnswer.trim() && !isAuthLoading ? "bg-orange-600" : "bg-gray-300"
+                }`}
                 onPress={handleSendAnswer}
                 disabled={!newAnswer.trim() || isAuthLoading}
               >
-                <Ionicons name="arrow-up" size={20} color="white" />
+                <Ionicons name="send" size={18} color="white" />
               </TouchableOpacity>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Pressable>
       </Pressable>
     </Modal>

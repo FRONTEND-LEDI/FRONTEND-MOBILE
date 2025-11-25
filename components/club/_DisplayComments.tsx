@@ -4,13 +4,13 @@ import { Comment, Foro } from "@/types/club";
 import { Ionicons, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import React, { useContext, useState } from "react";
 import {
-  Alert,
-  Modal,
-  Pressable,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Modal,
+    Pressable,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { Socket } from "socket.io-client";
 
@@ -28,12 +28,16 @@ const DisplayedComment = ({ comment, foros, socket, onViewThread }: Props) => {
   const [editedText, setEditedText] = useState(comment.content);
 
   const userName =
-    typeof comment.idUser === "string"
+    !comment.idUser || typeof comment.idUser === "string"
       ? "Usuario"
       : comment.idUser.userName || "Usuario";
   const getInitials = (name: string) => name.charAt(0).toUpperCase();
 
-  const isCommentOwner = user?._id === comment.idUser._id;
+  const isCommentOwner =
+    user?._id &&
+    comment.idUser &&
+    typeof comment.idUser === "object" &&
+    user._id === comment.idUser._id;
 
   const handleDelete = () => {
     if (!socket) return;
