@@ -1,11 +1,10 @@
-"use client";
-
 import { getBooks } from "@/app/api/catalogue";
 import { booksbyRecomendation, getBookbyLatestProgress } from "@/app/api/recomendations";
 import { authContext } from "@/app/context/authContext";
 import Banner from "@/assets/images/banner.png";
 import BookCarousel from "@/components/BookCarousel";
 import Header from "@/components/Header";
+import { Button } from "@react-navigation/elements";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useContext, useEffect, useState } from "react";
@@ -14,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
   const router = useRouter();
-  const { isLogin, user } = useContext(authContext);
+  const { isLogin, user, logout } = useContext(authContext);
   const [books, setBooks] = useState<any[]>([]);
   const [recommendations, setRecomendations] = useState<any[]>([]);
   const [booksLatest, setBookLatest] = useState<any[]>([]);
@@ -126,6 +125,7 @@ export default function Home() {
               </View>
             </View>
           </View>
+          <Button onPress={logout}>Cerrar sesión</Button>
 
           {/* Continúa tu progreso */}
           {booksLatest.length > 0 ? (

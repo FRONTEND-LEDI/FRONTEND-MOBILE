@@ -1,14 +1,12 @@
 import { CustomTabBar } from "@/components/CustomTabBar";
 import IAFAB from "@/components/IAFAB"; // Asegúrate que la ruta sea correcta
 import { MaterialIcons } from "@expo/vector-icons";
-import { Tabs, useSegments } from "expo-router";
+import { Tabs } from "expo-router";
 import React from "react";
 import { View } from "react-native";
 
 export default function TabsLayout() {
-  const segments = useSegments() as string[];
 
-  const isIAScreen = segments[0] === "(IA)";
 
   return (
     <Tabs
@@ -21,7 +19,7 @@ export default function TabsLayout() {
           backgroundColor: "#D97706",
           borderTopWidth: 0,
           height: 80,
-          display: isIAScreen ? "none" : "flex",
+
         },
         tabBarLabelStyle: {
           fontSize: 12,

@@ -1,3 +1,4 @@
+import { UserType } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { IP_ADDRESS } from "@/constants/configEnv";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -76,7 +77,7 @@ const getNivelStyle = (nivel: string): NivelStyle => {
 
 const ProfileScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -116,7 +117,7 @@ const ProfileScreen = () => {
               <View className="w-[100px] h-[100px] rounded-full bg-[#f8d49a] justify-center items-center mb-2 -mt-[100px] border-8 border-white">
                 <Image
                   className="w-full h-full rounded-full"
-                  source={{ uri: user.avatar.avatars.url_secura }}
+                  source={{ uri: user.avatar}}
                 />
               </View>
               {/* Name Container */}

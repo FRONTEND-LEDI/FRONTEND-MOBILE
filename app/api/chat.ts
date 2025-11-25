@@ -67,7 +67,7 @@ export const chat = async (message: string, sessionId: string): Promise<any> => 
         "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify({ 
-        session: sessionId, 
+        sessionId: sessionId, 
         msg: message 
       }),
     });

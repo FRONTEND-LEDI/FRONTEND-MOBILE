@@ -37,6 +37,7 @@ export default function Forum() {
   const { user, isLoading } = useContext(authContext);
   const socketRef = useRef<Socket | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const fetchComments = useCallback((foroId: string | null) => {
     const currentSocket = socketRef.current;

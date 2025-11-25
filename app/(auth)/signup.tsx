@@ -1,4 +1,5 @@
 import Logo from "@/assets/images/avatar-con-anteojos.png";
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -6,10 +7,13 @@ import {
   Alert,
   Animated,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import PagerView from "react-native-pager-view";
@@ -24,11 +28,14 @@ export default function RegisterScreen() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     username: "",
     name: "",
     lastName: "",
     birthDate: new Date(),
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -85,6 +92,17 @@ export default function RegisterScreen() {
   };
 
   const goToNextStep = () => {
+    if (step === 1) {
+      if (formData.password !== formData.confirmPassword) {
+        Alert.alert("Error", "Las contraseñas no coinciden");
+        return;
+      }
+      if (!formData.password || !formData.confirmPassword) {
+        Alert.alert("Error", "Por favor completa todos los campos de contraseña");
+        return;
+      }
+    }
+
     if (pagerRef.current) {
       pagerRef.current.setPage(step + 1);
     }
@@ -191,265 +209,322 @@ export default function RegisterScreen() {
   );
 
   return (
-    <PagerView
-      ref={pagerRef}
+    <KeyboardAvoidingView
       style={{ flex: 1 }}
-      initialPage={0}
-      onPageSelected={onPageSelected}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Paso 1: Datos personales */}
-      <View key="1" className="flex-1 bg-white justify-center px-6 py-8">
-        <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
-        </View>
-        <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
-          Comienza ahora
-        </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
-          Ingresa tus datos personales
-        </Text>
-
-        <TextInput
-          placeholder="Nombre"
-          value={formData.name}
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange("name", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
-        />
-
-        <TextInput
-          placeholder="Apellido"
-          value={formData.lastName}
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange("lastName", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
-        />
-
-        <TouchableOpacity
-          onPress={() => setShowDatePicker(true)}
-          className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
-        >
-          <Text className="text-[#333]">
-            {formData.birthDate.toLocaleDateString() || "Fecha de nacimiento"}
-          </Text>
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={formData.birthDate}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={onChangeDate}
-          />
-        )}
-
-        <TouchableOpacity
-          onPress={goToNextStep}
-          className="w-full bg-primary py-4 rounded-xl"
-        >
-          <Text className="text-white text-center font-semibold text-base">
-            Siguiente
-          </Text>
-        </TouchableOpacity>
-
-        {renderProgressDots()}
-      </View>
-
-      {/* Paso 2: Credenciales */}
-      <View key="2" className="flex-1 bg-white justify-center px-6 py-8">
-        <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
-        </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
-          Comienza ahora
-        </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
-          Crea tus credenciales para acceder de forma segura
-        </Text>
-        <TextInput
-          placeholder="Nombre de usuario"
-          value={formData.username}
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange("username", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
-        />
-
-        <TextInput
-          placeholder="Correo electrónico"
-          placeholderTextColor="#aaa"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          value={formData.email}
-          onChangeText={(text) => handleChange("email", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
-        />
-
-        <TextInput
-          placeholder="Contraseña"
-          placeholderTextColor="#aaa"
-          secureTextEntry
-          value={formData.password}
-          onChangeText={(text) => handleChange("password", text)}
-          className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
-        />
-
-        <View className="flex-row justify-between">
-          <TouchableOpacity
-            onPress={goToPreviousStep}
-            className="w-[48%] bg-gray-200 py-4 rounded-xl"
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{ flex: 1 }}>
+          <PagerView
+            ref={pagerRef}
+            style={{ flex: 1 }}
+            initialPage={0}
+            onPageSelected={onPageSelected}
           >
-            <Text className="text-gray-700 text-center font-semibold text-base">
-              Atrás
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={goToNextStep}
-            className="w-[48%] bg-primary py-4 rounded-xl"
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Siguiente
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Paso 1: Datos personales */}
+            <View key="1" className="flex-1 bg-white justify-center px-6 py-8">
+              <View className="items-center mb-6">
+                <Image
+                  source={Logo}
+                  className="w-32 h-32 rounded-full border-2 border-primary "
+                  accessible={true}
+                />
+              </View>
+              <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
+                Comienza ahora
+              </Text>
+              <Text className="text-gray-500 text-center mb-6 text-base">
+                Ingresa tus datos personales
+              </Text>
 
-        {renderProgressDots()}
-      </View>
-      {/* Paso 3: Elección de intereses */}
-      <View key="3" className="flex-1 bg-white justify-center px-6 py-8">
-        <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
-        </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
-          Elige tus intereses
-        </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
-          Selecciona las categorías que más te interesan
-        </Text>
+              <TextInput
+                placeholder="Nombre"
+                value={formData.name}
+                placeholderTextColor="#aaa"
+                onChangeText={(text) => handleChange("name", text)}
+                className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+              />
 
-        {loadingCategories ? (
-          <Text className="text-center text-gray-500">
-            Cargando categorías...
-          </Text>
-        ) : (
-          <>
-            <View className="flex-row flex-wrap justify-center mb-6">
-              {categories.map((category, index) => (
-                <TouchableOpacity
-                  key={`category-${index}-${category}`}
-                  onPress={() => handleSelectInterest(category)}
-                  className={`m-1 px-4 py-2 border rounded-full ${
-                    selectedInterests.includes(category)
-                      ? "bg-primary border-primary"
-                      : "bg-white border-gray-300"
-                  }`}
-                >
-                  <Text
-                    className={
-                      selectedInterests.includes(category)
-                        ? "text-white"
-                        : "text-gray-700"
-                    }
-                  >
-                    {category}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+              <TextInput
+                placeholder="Apellido"
+                value={formData.lastName}
+                placeholderTextColor="#aaa"
+                onChangeText={(text) => handleChange("lastName", text)}
+                className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+              />
 
-            <View className="flex-row justify-between">
               <TouchableOpacity
-                onPress={goToPreviousStep}
-                className="w-[48%] bg-gray-200 py-4 rounded-xl"
+                onPress={() => setShowDatePicker(true)}
+                className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
               >
-                <Text className="text-gray-700 text-center font-semibold text-base">
-                  Atrás
+                <Text className="text-[#333]">
+                  {formData.birthDate.toLocaleDateString() ||
+                    "Fecha de nacimiento"}
                 </Text>
               </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={formData.birthDate}
+                  mode="date"
+                  display="default"
+                  maximumDate={new Date()}
+                  onChange={onChangeDate}
+                />
+              )}
+
               <TouchableOpacity
                 onPress={goToNextStep}
-                className="w-[48%] bg-primary py-4 rounded-xl"
+                className="w-full bg-primary py-4 rounded-xl"
               >
                 <Text className="text-white text-center font-semibold text-base">
                   Siguiente
                 </Text>
               </TouchableOpacity>
-            </View>
-          </>
-        )}
-        {renderProgressDots()}
-      </View>
 
-      {/* Paso 4: Elección de avatar */}
-      <View key="4" className="flex-1 bg-white justify-center px-6 py-8">
-        <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
-        </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
-          Selecciona el avatar que más te guste
-        </Text>
-        {loadingAvatars ? (
-          <Text className="text-gray-500 text-center mb-6 text-base">
-            Cargando avatares...
-          </Text>
-        ) : (
-          <View className="flex-row flex-wrap justify-center">
-            {avatars.map((item) => (
-              <TouchableOpacity
-                key={item._id}
-                onPress={() => handleSelectedAvatar(item)}
-                className={`m-2 p-2 border rounded-full ${
-                  selectedAvatar?._id === item._id
-                    ? "bg-primary border-primary"
-                    : "bg-white border-gray-300"
-                }`}
-              >
+              {renderProgressDots()}
+            </View>
+
+            {/* Paso 2: Credenciales */}
+            <View key="2" className="flex-1 bg-white justify-center px-6 py-8">
+              <View className="items-center mb-6">
                 <Image
-                  source={{ uri: item.avatars.url_secura }}
-                  className="w-40 h-40 rounded-full"
+                  source={Logo}
+                  className="w-32 h-32 rounded-full border-2 border-primary "
+                  accessible={true}
                 />
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        <View className="flex-row justify-between">
-          <TouchableOpacity
-            onPress={goToPreviousStep}
-            className="w-[48%] bg-gray-200 py-4 rounded-xl"
-          >
-            <Text className="text-gray-700 text-center font-semibold text-base">
-              Atrás
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleRegister}
-            className="w-[48%] bg-primary py-4 rounded-xl"
-            disabled={selectedInterests.length === 0}
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Finalizar
-            </Text>
-          </TouchableOpacity>
+              </View>
+              <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
+                Comienza ahora
+              </Text>
+              <Text className="text-gray-500 text-center mb-6 text-base">
+                Crea tus credenciales para acceder de forma segura
+              </Text>
+              <TextInput
+                placeholder="Nombre de usuario"
+                value={formData.username}
+                placeholderTextColor="#aaa"
+                onChangeText={(text) => handleChange("username", text)}
+                className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-500 shadow"
+              />
+
+              <TextInput
+                placeholder="Correo electrónico"
+                placeholderTextColor="#aaa"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={formData.email}
+                onChangeText={(text) => handleChange("email", text)}
+                className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 bg-white text-base text-gray-500 shadow"
+              />
+
+              <View className="w-full mb-6">
+                <View className="flex-row items-center w-full h-14 border-[1px] border-secondary rounded-xl px-4 bg-white shadow">
+                  <TextInput
+                    className="flex-1 text-base text-gray-700 h-full"
+                    placeholder="Contraseña"
+                    placeholderTextColor="#aaa"
+                    secureTextEntry={!showPassword}
+                    value={formData.password}
+                    onChangeText={(text) => handleChange("password", text)}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="p-2"
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off" : "eye"}
+                      size={24}
+                      color="#aaa"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View className="w-full mb-6">
+                <View className="flex-row items-center w-full h-14 border-[1px] border-secondary rounded-xl px-4 bg-white shadow">
+                  <TextInput
+                    className="flex-1 text-base text-gray-700 h-full"
+                    placeholder="Confirmar Contraseña"
+                    placeholderTextColor="#aaa"
+                    secureTextEntry={!showConfirmPassword}
+                    value={formData.confirmPassword}
+                    onChangeText={(text) =>
+                      handleChange("confirmPassword", text)
+                    }
+                  />
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
+                    className="p-2"
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? "eye-off" : "eye"}
+                      size={24}
+                      color="#aaa"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View className="flex-row justify-between">
+                <TouchableOpacity
+                  onPress={goToPreviousStep}
+                  className="w-[48%] bg-gray-200 py-4 rounded-xl"
+                >
+                  <Text className="text-gray-700 text-center font-semibold text-base">
+                    Atrás
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={goToNextStep}
+                  className="w-[48%] bg-primary py-4 rounded-xl"
+                >
+                  <Text className="text-white text-center font-semibold text-base">
+                    Siguiente
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {renderProgressDots()}
+            </View>
+            {/* Paso 3: Elección de intereses */}
+            <View
+              key="3"
+              className="flex-1 bg-white justify-center px-6 py-8"
+            >
+              <View className="items-center mb-6">
+                <Image
+                  source={Logo}
+                  className="w-32 h-32 rounded-full border-2 border-primary "
+                  accessible={true}
+                />
+              </View>
+              <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
+                Elige tus intereses
+              </Text>
+              <Text className="text-gray-500 text-center mb-6 text-base">
+                Selecciona las categorías que más te interesan
+              </Text>
+
+              {loadingCategories ? (
+                <Text className="text-center text-gray-500">
+                  Cargando categorías...
+                </Text>
+              ) : (
+                <>
+                  <View className="flex-row flex-wrap justify-center mb-6">
+                    {categories.map((category, index) => (
+                      <TouchableOpacity
+                        key={`category-${index}-${category}`}
+                        onPress={() => handleSelectInterest(category)}
+                        className={`m-1 px-4 py-2 border rounded-full ${
+                          selectedInterests.includes(category)
+                            ? "bg-primary border-primary"
+                            : "bg-white border-gray-300"
+                        }`}
+                      >
+                        <Text
+                          className={
+                            selectedInterests.includes(category)
+                              ? "text-white"
+                              : "text-gray-700"
+                          }
+                        >
+                          {category}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <View className="flex-row justify-between">
+                    <TouchableOpacity
+                      onPress={goToPreviousStep}
+                      className="w-[48%] bg-gray-200 py-4 rounded-xl"
+                    >
+                      <Text className="text-gray-700 text-center font-semibold text-base">
+                        Atrás
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={goToNextStep}
+                      className="w-[48%] bg-primary py-4 rounded-xl"
+                    >
+                      <Text className="text-white text-center font-semibold text-base">
+                        Siguiente
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+              {renderProgressDots()}
+            </View>
+
+            {/* Paso 4: Elección de avatar */}
+            <View
+              key="4"
+              className="flex-1 bg-white justify-center px-6 py-8"
+            >
+              <View className="items-center mb-6">
+                <Image
+                  source={Logo}
+                  className="w-32 h-32 rounded-full border-2 border-primary "
+                  accessible={true}
+                />
+              </View>
+              <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
+                Selecciona el avatar que más te guste
+              </Text>
+              {loadingAvatars ? (
+                <Text className="text-gray-500 text-center mb-6 text-base">
+                  Cargando avatares...
+                </Text>
+              ) : (
+                <View className="flex-row flex-wrap justify-center">
+                  {avatars.map((item) => (
+                    <TouchableOpacity
+                      key={item._id}
+                      onPress={() => handleSelectedAvatar(item)}
+                      className={`m-2 p-2 border rounded-full ${
+                        selectedAvatar?._id === item._id
+                          ? "bg-primary border-primary"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <Image
+                        source={{ uri: item.avatars.url_secura }}
+                        className="w-40 h-40 rounded-full"
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              <View className="flex-row justify-between">
+                <TouchableOpacity
+                  onPress={goToPreviousStep}
+                  className="w-[48%] bg-gray-200 py-4 rounded-xl"
+                >
+                  <Text className="text-gray-700 text-center font-semibold text-base">
+                    Atrás
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleRegister}
+                  className="w-[48%] bg-primary py-4 rounded-xl"
+                  disabled={selectedInterests.length === 0}
+                >
+                  <Text className="text-white text-center font-semibold text-base">
+                    Finalizar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {renderProgressDots()}
+            </View>
+          </PagerView>
         </View>
-        {renderProgressDots()}
-      </View>
-    </PagerView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

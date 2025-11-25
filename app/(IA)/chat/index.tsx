@@ -3,13 +3,11 @@ import { authContext } from "@/app/context/authContext";
 import Header from "@/components/Header";
 import { Message } from "@/types/chat";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useNavigation } from "expo-router";
 import React, {
-  useCallback,
   useContext,
   useEffect,
   useRef,
-  useState,
+  useState
 } from "react";
 import {
   ActivityIndicator,
@@ -33,7 +31,7 @@ const generateId = () =>
 export default function ChatScreen() {
   const { user } = useContext(authContext);
 
-  const navigation = useNavigation();
+
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
 
@@ -44,21 +42,7 @@ export default function ChatScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sessionId] = useState(generateId());
 
-  useFocusEffect(
-    useCallback(() => {
-      const hola = navigation.getParent();
-      console.log(hola);
 
-      return () =>
-        navigation.getParent()?.setOptions({
-          tabBarStyle: {
-            backgroundColor: "#D97706",
-            height: 90,
-            borderTopWidth: 0,
-          },
-        });
-    }, [navigation])
-  );
 
   useEffect(() => {
     loadMemory();
@@ -251,9 +235,9 @@ export default function ChatScreen() {
 
               {m.isUser && (
                 <View style={styles.avatarUser}>
-                  {user?.avatar?.avatars?.url_secura ? (
+                  {user?.avatar? (
                     <Image
-                      source={{ uri: user.avatar.avatars.url_secura }}
+                      source={{ uri: user.avatar }}
                       style={styles.avatarUser}
                       resizeMode="cover"
                     />
