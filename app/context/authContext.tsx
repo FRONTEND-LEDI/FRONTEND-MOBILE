@@ -2,8 +2,22 @@ import { createContext } from "react";
 
 export interface UserPreference {
   category: string[];
-  format: string[]; 
+  format: string[];
   _id: string;
+}
+
+export interface LevelInfo {
+  level: number;
+  maxPoint: number;
+  img?: {
+    url_secura?: string;
+  };
+}
+
+export interface AvatarInfo {
+  avatars?: {
+    url_secura?: string;
+  };
 }
 
 export type UserType = {
@@ -11,16 +25,17 @@ export type UserType = {
   name: string;
   lastName: string;
   userName: string;
-  birthDate: string; 
+  birthDate: string;
   email: string;
-  password?: string; 
-  nivel: string; 
-  level: string;     
-  imgLevel: string;  
-  rol: string;      
-  avatar: string;    
+  password?: string;
+  nivel: string;
+  level?: LevelInfo | string;
+  imgLevel?: string;
+  rol: string;
+  avatar?: string | AvatarInfo;
   preference: UserPreference;
-  medals: any[];    
+  medals: any[];
+  point?: number;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
