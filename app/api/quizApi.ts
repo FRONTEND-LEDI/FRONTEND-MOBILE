@@ -20,8 +20,8 @@ export interface Book {
   genre?: string;
   format?: string;
 }
-
-export interface QuizOption {
+//Send to post /quiz/:id
+export interface QuizOptionRes {
   textOption: string;
   status: boolean;
 }
@@ -30,12 +30,21 @@ export interface QuizResponse {
   title: string;
   scenery: string;
   page: number;
-  option: QuizOption[];
+  option: QuizOptionRes[];
   completed?: boolean;
   score?: number;
   totalQuestions?: number;
 }
-
+interface QuizOptionReq {
+  text: string;
+  status: boolean;
+}
+interface QuizRequest {
+  title: string;
+  scenery: string;
+  page: number;
+  option?: QuizOptionReq;
+}
 const getToken = async () => {
   const token = await SecureStore.getItemAsync("token");
   if (!token) {
@@ -103,7 +112,7 @@ export const startQuiz = async (bookId: string): Promise<QuizResponse> => {
   const data = await response.json();
   return normalizeQuizResponse(data);
 };
-export const submitQuizAnswer = async (bookId: string, selectedOption: string, isCorrect: boolean, currentPage: number): Promise<QuizResponse> => {
+export const submitQuizAnswer = async (bookId: string, quiz: QuizRequest): Promise<QuizResponse> => {
   const token = await getToken();
   const response = await fetch(`${API_BASE_URL}/quiz/${bookId}`, {
     method: "POST",
@@ -113,9 +122,7 @@ export const submitQuizAnswer = async (bookId: string, selectedOption: string, i
       "x-client": "mobile",
     },
     body: JSON.stringify({
-      option: selectedOption,
-      status: isCorrect,
-      page: currentPage,
+      quiz,
     }),
   });
   console.log("submitQuizAnswer response status:", response.status);

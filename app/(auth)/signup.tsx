@@ -2,23 +2,9 @@ import Logo from "@/assets/images/avatar-con-anteojos.png";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Animated,
-  Image,
-  Platform,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Animated, Image, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 import PagerView from "react-native-pager-view";
-import {
-  AvatarResponse,
-  SignUpApi,
-  getAvatar,
-  getCategories,
-} from "../api/auth";
+import { AvatarResponse, SignUpApi, getAvatar, getCategories, getLevelImg } from "../api/auth";
 
 export default function RegisterScreen() {
   const [formData, setFormData] = useState({
@@ -35,19 +21,11 @@ export default function RegisterScreen() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingAvatars, setLoadingAvatars] = useState(false);
   const [avatars, setAvatars] = useState<AvatarResponse[]>([]);
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarResponse | null>(
-    null
-  );
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarResponse | null>(null);
   const pagerRef = useRef<PagerView>(null);
   const [step, setStep] = useState(0);
   const router = useRouter();
-  const [dotAnimations] = useState([
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-  ]);
+  const [dotAnimations] = useState([new Animated.Value(1), new Animated.Value(1), new Animated.Value(1), new Animated.Value(1), new Animated.Value(1)]);
 
   // Efecto para cargar categorías cuando se monta el componente
   useEffect(() => {
@@ -71,7 +49,6 @@ export default function RegisterScreen() {
     try {
       setLoadingAvatars(true);
       const avatarsData = await getAvatar();
-
       setAvatars(avatarsData);
     } catch (error) {
       console.error("Error al cargar avatares:", error);
@@ -143,19 +120,12 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     try {
       const { username, name, lastName, birthDate, email, password } = formData;
-
+      const imgLevel = getLevelImg();
+      const level = (await imgLevel).level;
       const formattedDate = birthDate.toISOString().split("T")[0];
       const avatarId = selectedAvatar ? selectedAvatar._id : "";
-      const res = await SignUpApi(
-        username,
-        name,
-        lastName,
-        formattedDate,
-        email,
-        password,
-        selectedInterests,
-        avatarId
-      );
+      console.log("Datos de registro", username, name, lastName, formattedDate, email, password, selectedInterests, avatarId);
+      const res = await SignUpApi(username, name, lastName, formattedDate, email, password, selectedInterests, avatarId, level);
 
       if (res?.result) {
         router.replace("/signin");
@@ -191,27 +161,14 @@ export default function RegisterScreen() {
   );
 
   return (
-    <PagerView
-      ref={pagerRef}
-      style={{ flex: 1 }}
-      initialPage={0}
-      onPageSelected={onPageSelected}
-    >
+    <PagerView ref={pagerRef} style={{ flex: 1 }} initialPage={0} onPageSelected={onPageSelected}>
       {/* Paso 1: Datos personales */}
       <View key="1" className="flex-1 bg-white justify-center px-6 py-8">
         <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
+          <Image source={Logo} className="w-32 h-32 rounded-full border-2 border-primary " accessible={true} />
         </View>
-        <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">
-          Comienza ahora
-        </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
-          Ingresa tus datos personales
-        </Text>
+        <Text className="text-3xl font-bold text-center mb-1 text-primary opacity-80">Comienza ahora</Text>
+        <Text className="text-gray-500 text-center mb-6 text-base">Ingresa tus datos personales</Text>
 
         <TextInput
           placeholder="Nombre"
@@ -233,28 +190,13 @@ export default function RegisterScreen() {
           onPress={() => setShowDatePicker(true)}
           className="text-[#333] w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-4 justify-center bg-white "
         >
-          <Text className="text-[#333]">
-            {formData.birthDate.toLocaleDateString() || "Fecha de nacimiento"}
-          </Text>
+          <Text className="text-[#333]">{formData.birthDate.toLocaleDateString() || "Fecha de nacimiento"}</Text>
         </TouchableOpacity>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={formData.birthDate}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={onChangeDate}
-          />
-        )}
+        {showDatePicker && <DateTimePicker value={formData.birthDate} mode="date" display="default" maximumDate={new Date()} onChange={onChangeDate} />}
 
-        <TouchableOpacity
-          onPress={goToNextStep}
-          className="w-full bg-primary py-4 rounded-xl"
-        >
-          <Text className="text-white text-center font-semibold text-base">
-            Siguiente
-          </Text>
+        <TouchableOpacity onPress={goToNextStep} className="w-full bg-primary py-4 rounded-xl">
+          <Text className="text-white text-center font-semibold text-base">Siguiente</Text>
         </TouchableOpacity>
 
         {renderProgressDots()}
@@ -263,18 +205,10 @@ export default function RegisterScreen() {
       {/* Paso 2: Credenciales */}
       <View key="2" className="flex-1 bg-white justify-center px-6 py-8">
         <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
+          <Image source={Logo} className="w-32 h-32 rounded-full border-2 border-primary " accessible={true} />
         </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
-          Comienza ahora
-        </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
-          Crea tus credenciales para acceder de forma segura
-        </Text>
+        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">Comienza ahora</Text>
+        <Text className="text-gray-500 text-center mb-6 text-base">Crea tus credenciales para acceder de forma segura</Text>
         <TextInput
           placeholder="Nombre de usuario"
           value={formData.username}
@@ -304,21 +238,11 @@ export default function RegisterScreen() {
         />
 
         <View className="flex-row justify-between">
-          <TouchableOpacity
-            onPress={goToPreviousStep}
-            className="w-[48%] bg-gray-200 py-4 rounded-xl"
-          >
-            <Text className="text-gray-700 text-center font-semibold text-base">
-              Atrás
-            </Text>
+          <TouchableOpacity onPress={goToPreviousStep} className="w-[48%] bg-gray-200 py-4 rounded-xl">
+            <Text className="text-gray-700 text-center font-semibold text-base">Atrás</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={goToNextStep}
-            className="w-[48%] bg-primary py-4 rounded-xl"
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Siguiente
-            </Text>
+          <TouchableOpacity onPress={goToNextStep} className="w-[48%] bg-primary py-4 rounded-xl">
+            <Text className="text-white text-center font-semibold text-base">Siguiente</Text>
           </TouchableOpacity>
         </View>
 
@@ -327,23 +251,13 @@ export default function RegisterScreen() {
       {/* Paso 3: Elección de intereses */}
       <View key="3" className="flex-1 bg-white justify-center px-6 py-8">
         <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
+          <Image source={Logo} className="w-32 h-32 rounded-full border-2 border-primary " accessible={true} />
         </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
-          Elige tus intereses
-        </Text>
-        <Text className="text-gray-500 text-center mb-6 text-base">
-          Selecciona las categorías que más te interesan
-        </Text>
+        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">Elige tus intereses</Text>
+        <Text className="text-gray-500 text-center mb-6 text-base">Selecciona las categorías que más te interesan</Text>
 
         {loadingCategories ? (
-          <Text className="text-center text-gray-500">
-            Cargando categorías...
-          </Text>
+          <Text className="text-center text-gray-500">Cargando categorías...</Text>
         ) : (
           <>
             <View className="flex-row flex-wrap justify-center mb-6">
@@ -352,40 +266,20 @@ export default function RegisterScreen() {
                   key={`category-${index}-${category}`}
                   onPress={() => handleSelectInterest(category)}
                   className={`m-1 px-4 py-2 border rounded-full ${
-                    selectedInterests.includes(category)
-                      ? "bg-primary border-primary"
-                      : "bg-white border-gray-300"
+                    selectedInterests.includes(category) ? "bg-primary border-primary" : "bg-white border-gray-300"
                   }`}
                 >
-                  <Text
-                    className={
-                      selectedInterests.includes(category)
-                        ? "text-white"
-                        : "text-gray-700"
-                    }
-                  >
-                    {category}
-                  </Text>
+                  <Text className={selectedInterests.includes(category) ? "text-white" : "text-gray-700"}>{category}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <View className="flex-row justify-between">
-              <TouchableOpacity
-                onPress={goToPreviousStep}
-                className="w-[48%] bg-gray-200 py-4 rounded-xl"
-              >
-                <Text className="text-gray-700 text-center font-semibold text-base">
-                  Atrás
-                </Text>
+              <TouchableOpacity onPress={goToPreviousStep} className="w-[48%] bg-gray-200 py-4 rounded-xl">
+                <Text className="text-gray-700 text-center font-semibold text-base">Atrás</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={goToNextStep}
-                className="w-[48%] bg-primary py-4 rounded-xl"
-              >
-                <Text className="text-white text-center font-semibold text-base">
-                  Siguiente
-                </Text>
+              <TouchableOpacity onPress={goToNextStep} className="w-[48%] bg-primary py-4 rounded-xl">
+                <Text className="text-white text-center font-semibold text-base">Siguiente</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -396,56 +290,30 @@ export default function RegisterScreen() {
       {/* Paso 4: Elección de avatar */}
       <View key="4" className="flex-1 bg-white justify-center px-6 py-8">
         <View className="items-center mb-6">
-          <Image
-            source={Logo}
-            className="w-32 h-32 rounded-full border-2 border-primary "
-            accessible={true}
-          />
+          <Image source={Logo} className="w-32 h-32 rounded-full border-2 border-primary " accessible={true} />
         </View>
-        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">
-          Selecciona el avatar que más te guste
-        </Text>
+        <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">Selecciona el avatar que más te guste</Text>
         {loadingAvatars ? (
-          <Text className="text-gray-500 text-center mb-6 text-base">
-            Cargando avatares...
-          </Text>
+          <Text className="text-gray-500 text-center mb-6 text-base">Cargando avatares...</Text>
         ) : (
           <View className="flex-row flex-wrap justify-center">
             {avatars.map((item) => (
               <TouchableOpacity
                 key={item._id}
                 onPress={() => handleSelectedAvatar(item)}
-                className={`m-2 p-2 border rounded-full ${
-                  selectedAvatar?._id === item._id
-                    ? "bg-primary border-primary"
-                    : "bg-white border-gray-300"
-                }`}
+                className={`m-2 p-2 border rounded-full ${selectedAvatar?._id === item._id ? "bg-primary border-primary" : "bg-white border-gray-300"}`}
               >
-                <Image
-                  source={{ uri: item.avatars.url_secura }}
-                  className="w-40 h-40 rounded-full"
-                />
+                <Image source={{ uri: item.avatars.url_secura }} className="w-40 h-40 rounded-full" />
               </TouchableOpacity>
             ))}
           </View>
         )}
         <View className="flex-row justify-between">
-          <TouchableOpacity
-            onPress={goToPreviousStep}
-            className="w-[48%] bg-gray-200 py-4 rounded-xl"
-          >
-            <Text className="text-gray-700 text-center font-semibold text-base">
-              Atrás
-            </Text>
+          <TouchableOpacity onPress={goToPreviousStep} className="w-[48%] bg-gray-200 py-4 rounded-xl">
+            <Text className="text-gray-700 text-center font-semibold text-base">Atrás</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleRegister}
-            className="w-[48%] bg-primary py-4 rounded-xl"
-            disabled={selectedInterests.length === 0}
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Finalizar
-            </Text>
+          <TouchableOpacity onPress={handleRegister} className="w-[48%] bg-primary py-4 rounded-xl" disabled={selectedInterests.length === 0}>
+            <Text className="text-white text-center font-semibold text-base">Finalizar</Text>
           </TouchableOpacity>
         </View>
         {renderProgressDots()}

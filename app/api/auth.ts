@@ -28,7 +28,19 @@ export const testConnection = async () => {
     console.log("Error de conexión:", error);
   }
 };
-
+export const getLevelImg = async (): Promise<LevelData> => {
+  const response = await fetch(`${API_BASE_URL}/firtsLevel`, {
+    headers: {
+      "Content-Type": "application/json",
+      "x-client": "mobile",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error status${response.status}`);
+  }
+  const data: LevelData = await response.json();
+  return data;
+};
 export const SignUpApi = async (
   userName: string,
   name: string,
@@ -37,7 +49,8 @@ export const SignUpApi = async (
   email: string,
   password: string,
   preference: string[],
-  avatar: string
+  avatar: string,
+  level: string
 ): Promise<any> => {
   try {
     const response = await fetch(`${API_BASE_URL}/register`, {
@@ -57,6 +70,7 @@ export const SignUpApi = async (
           category: preference,
         },
         avatar,
+        level,
       }),
     });
     if (!response.ok) {
@@ -65,8 +79,8 @@ export const SignUpApi = async (
 
     const data = await response.json();
 
-    if(!Array.isArray(data)){
-      return data
+    if (!Array.isArray(data)) {
+      return data;
     }
 
     const allCategories = data
@@ -111,7 +125,6 @@ export const getCategories: () => Promise<string[]> = async () => {
       headers: {
         "Content-Type": "application/json",
         "x-client": "mobile",
-        
       },
     });
     if (!response.ok) {
@@ -128,7 +141,10 @@ export interface AvatarData {
   url_secura: string;
   id_image: string;
 }
-
+export interface LevelData {
+  level: string;
+  imgLevel: string;
+}
 export interface AvatarResponse {
   _id: string;
   gender: string;
