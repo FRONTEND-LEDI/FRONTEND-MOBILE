@@ -25,4 +25,5 @@ export interface BookType {
   level?: string;
   format?: format;
   fileExtension: string;
+  anthology?: boolean;
 }
