@@ -1,30 +1,28 @@
 import { createContext } from "react";
 
+export interface UserPreference {
+  category: string[];
+  format: string[]; 
+  _id: string;
+}
+
 export type UserType = {
-   _id?: string;
-  name?: string;
-  lastName?: string;
-  userName?: string;
-  birthDate?: string;
+  _id: string;
+  name: string;
+  lastName: string;
+  userName: string;
+  birthDate: string; 
   email: string;
-  password?: string;
-  nivel?: string;
-  rol?: string;
-  points?: number;
-  avatar?: null | {
-    _id?: string;
-    gender?: "female" | "male" | "other" | string;
-    __v?: number;
-    avatars?: {
-      url_secura?: string;
-      id_image?: string;
-    };
-  };
-  preference?: {
-    category?: string[];
-    format?: string[];
-    _id?: string;
-  };
+  password?: string; 
+  nivel: string; 
+  level: string;     
+  imgLevel: string;  
+  rol: string;      
+  avatar: string;    
+  preference: UserPreference;
+  medals: any[];    
+  createdAt?: string;
+  updatedAt?: string;
   __v?: number;
 } | null;
 

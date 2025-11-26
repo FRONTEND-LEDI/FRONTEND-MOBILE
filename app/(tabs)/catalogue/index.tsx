@@ -96,20 +96,36 @@ export default function Products() {
   }, []);
 
   // Aplicar Filtros
-  useEffect(() => {
-    const applyFilters = async () => {
-      try {
-        setIsFiltering(true);
-        const response = await getBooksByFiltering(filters);
-        setFilteredBooks(response);
-      } catch (error) {
-        console.error("Error al aplicar filtros:", error);
-      } finally {
-        setIsFiltering(false);
-      }
-    };
-    applyFilters();
-  }, [filters]);
+  // Aplicar Filtros
+useEffect(() => {
+  const isEmptyFilter = 
+    filters.subgenre.length === 0 && 
+    filters.format.length === 0 && 
+    filters.yearBook.length === 0;
+
+  if (isEmptyFilter) {
+    // Si no hay filtros, usa los libros originales directamente
+    setFilteredBooks(books);
+    setIsFiltering(false);
+    return;
+  }
+
+  // Si hay filtros, llama a la API
+  const applyFilters = async () => {
+    try {
+      setIsFiltering(true);
+      const response = await getBooksByFiltering(filters);
+      setFilteredBooks(response);
+    } catch (error) {
+      console.error("Error al aplicar filtros:", error);
+      setFilteredBooks([]); // o muestra error
+    } finally {
+      setIsFiltering(false);
+    }
+  };
+
+  applyFilters();
+}, [filters, books]);
 
   // Actualizar Filtros
   const handleFilterChange = (key: string, value: string | null) => {
@@ -272,7 +288,7 @@ export default function Products() {
               renderItem={({ item }) => (
                 <BookCard
                   data={item}
-                  onPress={() => router.push(`../catalogue/${item._id}`)}
+                  onPress={() => router.navigate(`../catalogue/${item._id}`)}
                 />
               )}
             />

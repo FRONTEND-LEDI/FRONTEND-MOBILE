@@ -1,5 +1,6 @@
 import Logo from "@/assets/images/avatar-con-anteojos.png";
 import { URI } from "@/constants/ip";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStorage from "expo-secure-store";
 import { useContext, useState } from "react";
@@ -23,6 +24,7 @@ import { authContext } from "../context/authContext";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const { setIsLogin } = useContext(authContext);
   const router = useRouter();
@@ -117,19 +119,36 @@ export default function LoginScreen() {
               accessibilityHint="Ingresá tu dirección de correo electrónico"
               accessibilityRole="text"
             />
-            <TextInput
-              className="w-full h-14 border-[1px] border-secondary rounded-xl px-4 mb-6 bg-white text-base text-gray-700"
-              placeholder="Contraseña"
-              placeholderTextColor="#aaa"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              autoComplete="password"
-              accessible={true}
-              accessibilityLabel="Campo de contraseña"
-              accessibilityHint="Ingresá tu contraseña"
-              accessibilityRole="text"
-            />
+            <View className="w-full mb-6">
+              <View className="flex-row items-center w-full h-14 border-[1px] border-secondary rounded-xl px-4 bg-white shadow">
+                <TextInput
+                  className="flex-1 text-base text-gray-700 h-full"
+                  placeholder="Contraseña"
+                  placeholderTextColor="#aaa"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  autoComplete="password"
+                  accessible={true}
+                  accessibilityLabel="Campo de contraseña"
+                  accessibilityHint="Ingresá tu contraseña"
+                  accessibilityRole="text"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="p-2"
+                  accessibilityLabel={
+                    showPassword ? "Ocultar contraseña" : "Ver contraseña"
+                  }
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={24}
+                    color="#aaa"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
             <TouchableOpacity
               onPress={handleLogin}
               disabled={isSigningIn}

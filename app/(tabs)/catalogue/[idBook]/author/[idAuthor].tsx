@@ -1,7 +1,8 @@
 import { getAuthorById, getBooksByAuthor } from "@/app/api/author";
+import BookCarousel from "@/components/BookCarousel";
 import { AuthorType } from "@/types/author";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,7 +14,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+
 export default function Author() {
+  const router = useRouter();
   const { idAuthor } = useLocalSearchParams<{ idAuthor: string }>();
   const [author, setAuthor] = useState<AuthorType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -190,6 +193,7 @@ export default function Author() {
           <Text className="font-semibold text-xl mb-3 text-gray-800">
             Sus Obras
           </Text>
+          <BookCarousel data={books} onPressItem={(book)=> router.push(`/catalogue/${book._id}`)}/>
           
   
         </View>

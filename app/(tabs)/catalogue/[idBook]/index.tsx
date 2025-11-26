@@ -12,6 +12,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   Dimensions,
@@ -23,6 +24,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import StatusSelect from "../components/StatusSelect";
+// ⭐ AGREGAR ESTE IMPORT
+import AuthorsDisplay from "../components/AuthorsDisplay";
 
 export default function BookProps() {
   const router = useRouter();
@@ -33,7 +36,7 @@ export default function BookProps() {
   const [book, setBook] = useState<BookType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [author, setAuthor] = useState<AuthorType | null>(null);
+  const [authors, setAuthors] = useState<AuthorType[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,23 +57,31 @@ export default function BookProps() {
         }
       };
       fetchBook();
+
+      return () => {
+        setBook(null);
+        setLoading(true);
+        setError(null);
+      };
     }, [idBook])
   );
 
   useEffect(() => {
-    const getAuthor = async () => {
-      if (!book) return;
+    const getAuthors = async () => {
+      if (!book || !book.author) return;
       try {
-        const data = await getAuthorById(book.author[0]._id as string);
-        setAuthor(data);
+        const authorsData = await Promise.all(
+          book.author.map((auth) => getAuthorById(auth._id))
+        );
+        setAuthors(authorsData.filter((a): a is AuthorType => a !== null));
       } catch (error) {
-        console.error("Error al obtener el autor:", error);
-        setError("No se pudo cargar el autor");
+        console.error("Error al obtener los autores:", error);
+        setError("No se pudieron cargar los autores");
       }
     };
 
     if (book) {
-      getAuthor();
+      getAuthors();
     }
   }, [book]);
 
@@ -95,43 +106,45 @@ export default function BookProps() {
     }
   };
 
-  // Función para formatear duración en horas y minutos
   const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${secs}s`;
-  }
-  return `${secs}s`;
-};
-
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    }
+    return `${secs}s`;
+  };
 
   type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
 
-  const getFormatInfo = (): { icon: MaterialIconName; label: string; color: string } => {
-  switch (book?.format) {
-    case format.BOOK:
-      return { icon: "book", label: "Leer", color: "#D97706" };
-    case format.AUDIO:
-      return { icon: "multitrack-audio", label: "Escuchar", color: "#D97706" };
-    case format.VIDEO:
-      return { icon: "video-collection", label: "Ver video", color: "#D97706" };
-    default:
-      return { icon: "book", label: "Abrir", color: "#D97706" };
-  }
-};
-
-  useEffect(() => {
-    return () => {
-      setBook(null);
-      setLoading(true);
-      setError(null);
-    };
-  }, []);
+  const getFormatInfo = (): {
+    icon: MaterialIconName;
+    label: string;
+    color: string;
+  } => {
+    switch (book?.format) {
+      case format.BOOK:
+        return { icon: "book", label: "Leer", color: "#D97706" };
+      case format.AUDIO:
+        return {
+          icon: "multitrack-audio",
+          label: "Escuchar",
+          color: "#D97706",
+        };
+      case format.VIDEO:
+        return {
+          icon: "video-collection",
+          label: "Ver video",
+          color: "#D97706",
+        };
+      default:
+        return { icon: "book", label: "Abrir", color: "#D97706" };
+    }
+  };
 
   if (loading) {
     return (
@@ -202,8 +215,6 @@ export default function BookProps() {
                 }}
               />
             </View>
-
-            
           </View>
         </View>
 
@@ -214,22 +225,8 @@ export default function BookProps() {
             {book.title}
           </Text>
 
-          {/* Autor con avatar */}
-          <TouchableOpacity
-            className="flex-row items-center justify-center mb-4"
-            onPress={() =>
-              router.push(`./${idBook}/author/${book.author[0]._id}`)
-            }
-          >
-            <Image
-              source={{ uri: author?.avatar.url_secura }}
-              className="w-8 h-8 rounded-full mr-2 border-2 border-primary"
-            />
-            <Text className="text-base text-gray-600 font-medium">
-              {book.author[0].fullName}
-            </Text>
-            <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
+          {/* ⭐ REEMPLAZAR TODO EL BLOQUE DE AUTORES CON ESTO */}
+          <AuthorsDisplay authors={authors} idBook={idBook as string} />
 
           {/* Stats rápidas */}
           <View className="flex-row justify-around py-4 border-t border-b border-gray-100">
@@ -253,7 +250,11 @@ export default function BookProps() {
             )}
             {book.level && (
               <View className="items-center">
-                <MaterialIcons name="signal-cellular-alt" size={24} color="#10B981" />
+                <MaterialIcons
+                  name="signal-cellular-alt"
+                  size={24}
+                  color="#10B981"
+                />
                 <Text className="text-gray-800 font-bold text-base mt-1">
                   {book.level}
                 </Text>
@@ -264,7 +265,6 @@ export default function BookProps() {
 
           {/* Botones de acción */}
           <View className="flex-row justify-center items-center gap-3 mt-6">
-            {/* Botón principal según formato */}
             <TouchableOpacity
               className="flex-1 flex-row items-center justify-center py-4 rounded-full shadow-lg"
               style={{
@@ -298,7 +298,6 @@ export default function BookProps() {
               </Text>
             </TouchableOpacity>
 
-            
             <View className="flex-1">
               <StatusSelect value={status} onChange={handleStatusChange} />
             </View>
@@ -336,7 +335,7 @@ export default function BookProps() {
                 <Text className="text-gray-800 font-bold">{book.genre}</Text>
               </View>
             )}
-            
+
             {book.subgenre && book.subgenre.length > 0 && (
               <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
                 <Text className="text-gray-600 font-medium">Subgénero</Text>
@@ -357,7 +356,9 @@ export default function BookProps() {
 
             {book.fileExtension && (
               <View className="flex-row justify-between items-center py-3">
-                <Text className="text-gray-600 font-medium">Formato de archivo</Text>
+                <Text className="text-gray-600 font-medium">
+                  Formato de archivo
+                </Text>
                 <Text className="text-gray-800 font-bold uppercase">
                   {book.fileExtension}
                 </Text>
@@ -376,7 +377,7 @@ export default function BookProps() {
               </Text>
             </View>
             <View className="flex-row flex-wrap gap-2">
-              {book.theme.slice(0, 1).map((item, index)=> (
+              {book.theme.slice(0, 1).map((item, index) => (
                 <ButtonTheme key={index} data={{ text: item }} />
               ))}
             </View>

@@ -1,30 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useRef } from "react";
-import {
-  Dimensions,
-  FlatList,
-  Image,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Dimensions, FlatList, Image, TouchableOpacity, View } from "react-native";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = width / 3.5;
+
 type Book = {
   _id: string;
-  bookCoverImage: {
-    url_segura: string;
+  bookCoverImage?: {
+    url_secura?: string;
   };
 };
 
 type BookCarouselProps = {
   data: Book[];
+  onPressItem?: (book: Book) => void;
 };
 
-export default function BookCarousel({ data }: BookCarouselProps) {
-  const router = useRouter();
-
+export default function BookCarousel({ data, onPressItem }: BookCarouselProps) {
   const flatListRef = useRef<FlatList>(null);
   const scrollPosition = useRef(0);
 
@@ -34,6 +27,14 @@ export default function BookCarousel({ data }: BookCarouselProps) {
       offset: scrollPosition.current,
       animated: true,
     });
+  };
+
+  const getBookImage = (book: Book) => {
+    const imageUrl =
+      book.bookCoverImage?.url_secura || 
+      "https://imgs.search.brave.com/CLocZ60Ulym7ZdP1n0bu-UWYnllARxnUNFHLCXNhAsQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90aHVt/YnMuZHJlYW1zdGlt/ZS5jb20vYi9mb25k/by1hbWFyaWxsby15/LWFuYXJhbmphZG8t/ZGUtbGEtdGV4dHVy/YS00MTUwMDkxMS5q/cGc";
+
+    return imageUrl;
   };
 
   return (
@@ -83,16 +84,12 @@ export default function BookCarousel({ data }: BookCarouselProps) {
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => router.navigate(`./catalogue/${item._id}`)}
+            onPress={() => onPressItem?.(item)}
             className="items-center"
             style={{ width: ITEM_WIDTH, marginRight: 8 }}
           >
             <Image
-              source={{
-                uri:
-                  item.bookCoverImage.url_secura ||
-                  "https://imgs.search.brave.com/CLocZ60Ulym7ZdP1n0bu-UWYnllARxnUNFHLCXNhAsQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90aHVt/YnMuZHJlYW1zdGlt/ZS5jb20vYi9mb25k/by1hbWFyaWxsby15/LWFuYXJhbmphZG8t/ZGUtbGEtdGV4dHVy/YS00MTUwMDkxMS5q/cGc",
-              }}
+              source={{ uri: getBookImage(item) }}
               className="rounded-md"
               style={{ width: ITEM_WIDTH - 10, height: 180 }}
               resizeMode="cover"

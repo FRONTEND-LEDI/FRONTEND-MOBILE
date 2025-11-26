@@ -26,7 +26,7 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
         });
         const responseData = await res.json();
         const userData = responseData.result;
-
+        
         setUser(userData);
         setIsLogin(true);
       } catch (error) {

@@ -13,7 +13,7 @@ export type Comment = {
   _id: string;
   idComent?: string;
   idForo: string;
-  idUser: CommentUser;
+  idUser: CommentUser | string | null;
   content: string;
   createdAt?: string;
 };
