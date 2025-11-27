@@ -164,8 +164,12 @@ export const getAvatar: () => Promise<AvatarResponse[]> = async () => {
       throw new Error("Error en la solicitud: " + response.statusText);
     }
     const data: AvatarResponse[] = await response.json();
-    const avatars = data;
-    return avatars;
+    if (!Array.isArray(data)) {
+      console.error("API did not return an array for avatars:", data);
+      return [];
+    }
+    const uniqueAvatars = Array.from(new Map(data.map((item) => [item._id, item])).values());
+    return uniqueAvatars;
   } catch (error) {
     throw error;
   }

@@ -1,10 +1,10 @@
+import { AvatarResponse, getAvatar } from "@/app/api/auth";
 import { updateUser } from "@/app/api/profile";
 import { getFormats, getSubgenres } from "@/app/api/types";
 import { UserType } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { MaterialIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -37,6 +37,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [availableFormats, setAvailableFormats] = useState<string[]>([]);
     const [availableSubgenres, setAvailableSubgenres] = useState<string[]>([]);
+    const [avatars, setAvatars] = useState<AvatarResponse[]>([]);
+    const [loadingAvatars, setLoadingAvatars] = useState(false);
 
     const [editForm, setEditForm] = useState({
         name: "",
@@ -80,8 +82,21 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 console.error("Error fetching options:", error);
             }
         };
+        const loadAvatars = async () => {
+            try {
+                setLoadingAvatars(true);
+                const data = await getAvatar();
+                setAvatars(data);
+            } catch (error) {
+                console.error("Error fetching avatars:", error);
+            } finally {
+                setLoadingAvatars(false);
+            }
+        };
+
         if (visible) {
             fetchOptions();
+            loadAvatars();
         }
     }, [visible]);
 
@@ -89,8 +104,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         if (!user) return;
         setUpdating(true);
         try {
-            const token = await SecureStore.getItemAsync("token");
-            if (!token) throw new Error("No token found");
 
             const updatedData: any = {
                 ...user,
@@ -102,7 +115,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 preference: editForm.preference,
             };
 
-            await updateUser(updatedData, token);
+            console.log("datos a cambiar", updatedData)
+            await updateUser(updatedData);
 
             Alert.alert("Éxito", "Perfil actualizado correctamente");
             onUpdateSuccess();
@@ -163,27 +177,47 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         </View>
 
                         <ScrollView className="flex-1 p-5" showsVerticalScrollIndicator={false}>
-                            {/* Avatar Input */}
+                            {/* Avatar Selection */}
                             <View className="mb-5">
                                 <Text className="text-sm font-bold text-gray-700 mb-2">
-                                    URL del Avatar
+                                    Selecciona tu Avatar
                                 </Text>
-                                <TextInput
-                                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
-                                    value={editForm.avatar}
-                                    onChangeText={(text) =>
-                                        setEditForm({ ...editForm, avatar: text })
-                                    }
-                                    placeholder="https://ejemplo.com/avatar.png"
-                                />
-                                {editForm.avatar ? (
-                                    <View className="mt-3 items-center">
-                                        <Image
-                                            source={{ uri: editForm.avatar }}
-                                            className="w-20 h-20 rounded-full"
-                                        />
+                                {loadingAvatars ? (
+                                    <ActivityIndicator size="small" color={colors.primary} />
+                                ) : (
+                                    <View className="flex-row flex-wrap justify-center">
+                                        {avatars.map((item) => {
+                                            const isSelected =
+                                                editForm.avatar === item._id ||
+                                                editForm.avatar === item.avatars.url_secura;
+                                            return (
+                                                <TouchableOpacity
+                                                    key={item._id}
+                                                    onPress={() =>
+                                                        setEditForm({ ...editForm, avatar: item._id })
+                                                    }
+                                                    className={`m-2 p-1 border rounded-full ${isSelected
+                                                        ? "bg-orange-100 border-orange-500"
+                                                        : "bg-white border-gray-300"
+                                                        }`}
+                                                    style={
+                                                        isSelected
+                                                            ? {
+                                                                backgroundColor: colors.primary,
+                                                                borderColor: colors.primary,
+                                                            }
+                                                            : {}
+                                                    }
+                                                >
+                                                    <Image
+                                                        source={{ uri: item.avatars.url_secura }}
+                                                        className="w-16 h-16 rounded-full"
+                                                    />
+                                                </TouchableOpacity>
+                                            );
+                                        })}
                                     </View>
-                                ) : null}
+                                )}
                             </View>
 
                             {/* Name & Last Name */}
@@ -267,8 +301,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                                                 key={genre}
                                                 onPress={() => togglePreference("category", genre)}
                                                 className={`px-3 py-2 rounded-full border ${isSelected
-                                                        ? "bg-indigo-100 border-indigo-500"
-                                                        : "bg-gray-50 border-gray-200"
+                                                    ? "bg-indigo-100 border-indigo-500"
+                                                    : "bg-gray-50 border-gray-200"
                                                     }`}
                                             >
                                                 <Text
@@ -297,8 +331,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                                                 key={format}
                                                 onPress={() => togglePreference("format", format)}
                                                 className={`px-3 py-2 rounded-full border ${isSelected
-                                                        ? "bg-emerald-100 border-emerald-500"
-                                                        : "bg-gray-50 border-gray-200"
+                                                    ? "bg-emerald-100 border-emerald-500"
+                                                    : "bg-gray-50 border-gray-200"
                                                     }`}
                                             >
                                                 <Text

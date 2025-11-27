@@ -41,7 +41,7 @@ const ProfileScreen = () => {
       });
       const userRes = await userReq.json();
       setUser(userRes.result);
-      console.log(userRes.result);
+
     } catch (error) {
       console.error("Error fetching user:", error);
     } finally {
