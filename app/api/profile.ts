@@ -39,3 +39,28 @@ export const getMedals = async (idMedal: string): Promise<MedalResponse> => {
     throw error;
   }
 };
+
+export const updateUser = async (user: any, token: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/updateUser`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        newUser: user
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al actualizar el usuario: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error en updateUser:", error);
+    throw error;
+  }
+}
