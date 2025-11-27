@@ -5,23 +5,8 @@ import { IP_ADDRESS } from "@/constants/configEnv";
 import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStorage from "expo-secure-store";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  StatusBar,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Alert, KeyboardAvoidingView, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { io, Socket } from "socket.io-client";
 import DisplayedComment from "../../../components/club/_DisplayComments";
 import CommentsAnswers from "../../../components/club/CommentsAnswers";
@@ -37,7 +22,7 @@ export default function Forum() {
   const { user, isLoading } = useContext(authContext);
   const socketRef = useRef<Socket | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const fetchComments = useCallback((foroId: string | null) => {
     const currentSocket = socketRef.current;
@@ -56,7 +41,7 @@ export default function Forum() {
         console.error("Error al obtener token:", error);
         return null;
       });
-
+      console.log("LATOKEN", token);
       const currentSocket = io(URL, {
         auth: { token: token || "" },
       });
@@ -185,21 +170,9 @@ export default function Forum() {
         }}
         className="flex-1 px-6"
       >
-        <ForoTopics
-          foros={foros}
-          selectedForoId={selectedForoId}
-          onTopicPress={handleTopicPress}
-          onGetAllComments={handleGetAllComments}
-        />
-        <Text
-          className="text-xl font-bold mt-5 mb-3"
-          style={{ color: colors.primary }}
-        >
-          {selectedForoId
-            ? `Comentarios del Foro ${
-                foros.find((f) => f._id === selectedForoId)?.title
-              }`
-            : "Todos los comentarios"}
+        <ForoTopics foros={foros} selectedForoId={selectedForoId} onTopicPress={handleTopicPress} onGetAllComments={handleGetAllComments} />
+        <Text className="text-xl font-bold mt-5 mb-3" style={{ color: colors.primary }}>
+          {selectedForoId ? `Comentarios del Foro ${foros.find((f) => f._id === selectedForoId)?.title}` : "Todos los comentarios"}
         </Text>
 
         {displayedComment.map((comment) => (
@@ -217,9 +190,7 @@ export default function Forum() {
 
         {displayedComment.length === 0 && (
           <View className="bg-gray-50 p-6 rounded-xl items-center justify-center border border-gray-200">
-            <Text className="text-base text-gray-500 font-medium">
-              No hay comentarios en este tema. ¡Sé el primero en escribir!
-            </Text>
+            <Text className="text-base text-gray-500 font-medium">No hay comentarios en este tema. ¡Sé el primero en escribir!</Text>
           </View>
         )}
       </ScrollView>
@@ -229,19 +200,14 @@ export default function Forum() {
           <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
             <TextInput
               className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
-              placeholder={`Comentar en: ${
-                foros.find((f) => f._id === selectedForoId)?.title ||
-                "Foro Seleccionado"
-              }...`}
+              placeholder={`Comentar en: ${foros.find((f) => f._id === selectedForoId)?.title || "Foro Seleccionado"}...`}
               placeholderTextColor="#9ca3af"
               value={newComment}
               onChangeText={setNewComment}
               editable={!!selectedForoId}
             />
             <TouchableOpacity
-              className={`rounded-full p-2 ml-2 ${
-                newComment.trim() ? "bg-orange-500" : "bg-gray-300"
-              }`}
+              className={`rounded-full p-2 ml-2 ${newComment.trim() ? "bg-orange-500" : "bg-gray-300"}`}
               onPress={handleSendComment}
               disabled={!newComment.trim()}
             >
@@ -251,9 +217,7 @@ export default function Forum() {
         </View>
       ) : (
         <View className="bg-gray-100 p-4 rounded-xl mx-4 mb-4 items-center justify-center border border-gray-200">
-          <Text className="text-base text-gray-500 text-center font-medium">
-            Selecciona un tema para participar
-          </Text>
+          <Text className="text-base text-gray-500 text-center font-medium">Selecciona un tema para participar</Text>
         </View>
       )}
       <CommentsAnswers

@@ -6,7 +6,8 @@ export type Foro = {
 export type CommentUser = {
   _id: string;
   userName: string;
-  avatar?: string;
+  avatar: string;
+  imgLevel: string;
 };
 
 export type Comment = {
