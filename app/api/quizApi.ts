@@ -152,3 +152,48 @@ export const submitQuiz = async (bookId: string, payload: any): Promise<QuizResp
   const data = await response.json();
   return normalizeQuizResponse(data);
 };
+// Frontend - Manejar la respuesta final
+export const handleFinalQuizAnswer = async (
+  idBook: string,
+  answer: {
+    text: string;
+    status: boolean;
+    title: string;
+    scenery: string;
+    page: number;
+  }
+) => {
+  try {
+    const token = getToken();
+    const response = await fetch(`http://localhost:TU_PUERTO/ai/quiz/${idBook}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: answer.title,
+        scenery: answer.scenery,
+        page: answer.page,
+        option: {
+          text: answer.text,
+          status: answer.status,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    // Verificar si es la respuesta final (ResGameQuizFinal)
+    if (data.completed) {
+      console.log("¡JUEGO TERMINADO!");
+      console.log("Título:", data.title);
+      console.log("Mensaje final:", data.textCompleted);
+      console.log("PUNTUACIÓN FINAL:", data.score); // ← Aquí están los puntos
+
+      // Guardar puntos en tu BD/estado del usuario
+    }
+  } catch (error) {
+    console.error("Error en pregunta final:", error);
+  }
+};
