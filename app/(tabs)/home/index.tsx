@@ -4,7 +4,6 @@ import { authContext } from "@/app/context/authContext";
 import Banner from "@/assets/images/banner.png";
 import BookCarousel from "@/components/BookCarousel";
 import Header from "@/components/Header";
-import { Button } from "@react-navigation/elements";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useContext, useEffect, useState } from "react";
@@ -32,11 +31,7 @@ export default function Home() {
 
   const fetchAllData = async () => {
     try {
-      const [booksData, recommendationsData, latestData] = await Promise.all([
-        getBooks(),
-        booksbyRecomendation(),
-        getBookbyLatestProgress(),
-      ]);
+      const [booksData, recommendationsData, latestData] = await Promise.all([getBooks(), booksbyRecomendation(), getBookbyLatestProgress()]);
 
       // Filtro preventivo para evitar datos sin _id o estructura incorrecta
       const validBooks = booksData.filter((b: any) => b?._id);
@@ -46,7 +41,6 @@ export default function Home() {
       setBooks(validBooks);
       setRecomendations(validRecs);
       setBookLatest(validLatest);
-
     } catch (error) {
       console.log("Error al cargar datos:", error);
     } finally {
@@ -82,18 +76,14 @@ export default function Home() {
 
   const handleBookPress = (book: any) => {
     router.navigate({
-      pathname: '/(tabs)/catalogue/[idBook]',
-      params: { idBook: book._id }
+      pathname: "/(tabs)/catalogue/[idBook]",
+      params: { idBook: book._id },
     });
   };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Header />
 
         <View className="pb-8">
@@ -125,7 +115,6 @@ export default function Home() {
               </View>
             </View>
           </View>
-          <Button onPress={logout}>Cerrar sesión</Button>
 
           {/* Continúa tu progreso */}
           {booksLatest.length > 0 ? (
@@ -134,18 +123,13 @@ export default function Home() {
                 <Text className="text-2xl text-primary font-bold tracking-tight">Continúa tu progreso</Text>
                 <View className="mt-1 w-12 h-1 bg-primary rounded-full" />
               </View>
-              <BookCarousel
-                data={booksLatest}
-                onPressItem={handleBookPress}
-              />
+              <BookCarousel data={booksLatest} onPressItem={handleBookPress} />
             </View>
           ) : (
             <View className="px-5 mb-8">
               <View className="bg-blue-50 rounded-xl p-5 border border-blue-100">
                 <Text className="text-base font-semibold text-blue-900 mb-1">Comienza tu aventura</Text>
-                <Text className="text-sm text-blue-700">
-                  Explora nuestra colección y comienza a leer tu primer libro
-                </Text>
+                <Text className="text-sm text-blue-700">Explora nuestra colección y comienza a leer tu primer libro</Text>
               </View>
             </View>
           )}
@@ -157,11 +141,7 @@ export default function Home() {
                 <Text className="text-2xl text-primary font-bold tracking-tight">Te podría interesar</Text>
                 <View className="mt-1 w-12 h-1 bg-primary rounded-full" />
               </View>
-              <BookCarousel
-                data={recommendations}
-                onPressItem={handleBookPress}
-                
-              />
+              <BookCarousel data={recommendations} onPressItem={handleBookPress} />
             </View>
           )}
 
@@ -172,11 +152,7 @@ export default function Home() {
                 <Text className="text-2xl text-primary font-bold tracking-tight">Antologías</Text>
                 <View className="mt-1 w-12 h-1 bg-primary rounded-full" />
               </View>
-              <BookCarousel
-                data={books}
-                onPressItem={handleBookPress}
-               
-              />
+              <BookCarousel data={books} onPressItem={handleBookPress} />
             </View>
           )}
         </View>

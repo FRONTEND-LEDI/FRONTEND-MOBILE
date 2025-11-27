@@ -151,7 +151,6 @@ export default function RegisterScreen() {
       const level = (await imgLevel).level;
       const formattedDate = birthDate.toISOString().split("T")[0];
       const avatarId = selectedAvatar ? selectedAvatar._id : "";
-      console.log("Datos de registro", username, name, lastName, formattedDate, email, password, selectedInterests, avatarId);
       const res = await SignUpApi(username, name, lastName, formattedDate, email, password, selectedInterests, avatarId, level);
 
       if (res?.result) {
