@@ -230,7 +230,7 @@ export const deleteBookProgress = async (idBook: string) => {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        authorization: `Bearer ${token}`,
+        "authorization": `Bearer ${token}`,
         "x-client": "mobile",
       },
       body: JSON.stringify({ idBook }),

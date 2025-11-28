@@ -11,7 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Dimensions, Image, Modal, RefreshControl, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 const { width } = Dimensions.get("window");
@@ -25,6 +25,7 @@ const ProfileScreen = () => {
   const [userMedals, setUserMedals] = useState<MedalResponse[]>([]);
   const [selectedMedal, setSelectedMedal] = useState<{ url: string, name: string } | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<"reading" | "finished" | "pending">("reading");
 
   const fetchUserData = async () => {
     const token = await SecureStore.getItemAsync("token");
@@ -142,7 +143,7 @@ const ProfileScreen = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -393,66 +394,101 @@ const ProfileScreen = () => {
         )}
 
         {/* BOOK SECTIONS */}
+        {/* BOOK TABS & CONTENT */}
         <View className="mt-2">
-          {progress.filter((item) => item.status === "reading").length > 0 && (
-            <Animated.View entering={FadeInDown.delay(500).duration(600)} className="mb-8">
-              <View className="px-5 flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center gap-2">
-                  <View className="w-1 h-6 bg-primary rounded-full" />
-                  <Text className="text-lg font-bold text-gray-900">Continuar Leyendo</Text>
-                </View>
-                <View className="bg-primary/10 w-6 h-6 rounded-full justify-center items-center">
-                  <Text className="text-xs font-bold text-primary">
-                    {progress.filter((item) => item.status === "reading").length}
-                  </Text>
-                </View>
-              </View>
-              <BookCarousel
-                data={progress.filter((item) => item.status === "reading")}
-                onPressItem={(item) => router.push(`/catalogue/${item._id}`)}
-              />
-            </Animated.View>
-          )}
+          {/* Tabs */}
+          <View className="px-5 flex-row gap-3 mb-6">
+            {[
+              { id: "reading", label: "Leyendo", count: readingStats.reading },
+              { id: "finished", label: "Terminados", count: readingStats.finished },
+              { id: "pending", label: "Mi Lista", count: readingStats.pending },
+            ].map((tab) => (
+              <TouchableOpacity
+                key={tab.id}
+                onPress={() => setActiveTab(tab.id as any)}
+                className={`flex-1 py-2.5 px-3 rounded-full items-center justify-center border ${activeTab === tab.id
+                  ? "bg-primary border-primary"
+                  : "bg-white border-gray-200"
+                  }`}
+              >
+                <Text
+                  className={`text-xs font-bold ${activeTab === tab.id ? "text-white" : "text-gray-600"
+                    }`}
+                >
+                  {tab.label} ({tab.count})
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-          {progress.filter((item) => item.status === "finished").length > 0 && (
-            <Animated.View entering={FadeInDown.delay(600).duration(600)} className="mb-8">
-              <View className="px-5 flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center gap-2">
-                  <View className="w-1 h-6 bg-green-500 rounded-full" />
-                  <Text className="text-lg font-bold text-gray-900">Terminados</Text>
-                </View>
-                <View className="bg-green-100 w-6 h-6 rounded-full justify-center items-center">
-                  <Text className="text-xs font-bold text-green-600">
-                    {progress.filter((item) => item.status === "finished").length}
-                  </Text>
-                </View>
-              </View>
-              <BookCarousel
-                data={progress.filter((item) => item.status === "finished")}
-                onPressItem={(item) => router.push(`/catalogue/${item._id}`)}
-              />
-            </Animated.View>
-          )}
+          {/* Content */}
+          <View className="min-h-[280px]">
+            {activeTab === "reading" && (
+              <Animated.View
+                key="reading"
+                entering={FadeInDown.duration(400)}
+                className="mb-8"
+              >
+                {progress.filter((item) => item.status === "reading").length > 0 ? (
+                  <BookCarousel
+                    data={progress.filter((item) => item.status === "reading")}
+                    onPressItem={(item) => router.push(`/catalogue/${item._id}`)}
+                  />
+                ) : (
+                  <View className="items-center justify-center py-10 px-5">
+                    <MaterialIcons name="menu-book" size={48} color="#e5e7eb" />
+                    <Text className="text-gray-400 text-center mt-3 font-medium">
+                      No estás leyendo ningún libro actualmente.
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
+            )}
 
-          {progress.filter((item) => item.status === "pending").length > 0 && (
-            <Animated.View entering={FadeInDown.delay(700).duration(600)} className="mb-8">
-              <View className="px-5 flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center gap-2">
-                  <View className="w-1 h-6 bg-gray-400 rounded-full" />
-                  <Text className="text-lg font-bold text-gray-900">Mi Lista</Text>
-                </View>
-                <View className="bg-gray-100 w-6 h-6 rounded-full justify-center items-center">
-                  <Text className="text-xs font-bold text-gray-600">
-                    {progress.filter((item) => item.status === "pending").length}
-                  </Text>
-                </View>
-              </View>
-              <BookCarousel
-                data={progress.filter((item) => item.status === "pending")}
-                onPressItem={(item) => router.push(`/catalogue/${item._id}`)}
-              />
-            </Animated.View>
-          )}
+            {activeTab === "finished" && (
+              <Animated.View
+                key="finished"
+                entering={FadeInDown.duration(400)}
+                className="mb-8"
+              >
+                {progress.filter((item) => item.status === "finished").length > 0 ? (
+                  <BookCarousel
+                    data={progress.filter((item) => item.status === "finished")}
+                    onPressItem={(item) => router.push(`/catalogue/${item._id}`)}
+                  />
+                ) : (
+                  <View className="items-center justify-center py-10 px-5">
+                    <MaterialIcons name="check-circle" size={48} color="#e5e7eb" />
+                    <Text className="text-gray-400 text-center mt-3 font-medium">
+                      Aún no has terminado ningún libro.
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
+            )}
+
+            {activeTab === "pending" && (
+              <Animated.View
+                key="pending"
+                entering={FadeInDown.duration(400)}
+                className="mb-8"
+              >
+                {progress.filter((item) => item.status === "pending").length > 0 ? (
+                  <BookCarousel
+                    data={progress.filter((item) => item.status === "pending")}
+                    onPressItem={(item) => router.push(`/catalogue/${item._id}`)}
+                  />
+                ) : (
+                  <View className="items-center justify-center py-10 px-5">
+                    <MaterialIcons name="bookmark" size={48} color="#e5e7eb" />
+                    <Text className="text-gray-400 text-center mt-3 font-medium">
+                      Tu lista de lectura está vacía.
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
+            )}
+          </View>
         </View>
 
         {/* LOGOUT BUTTON */}

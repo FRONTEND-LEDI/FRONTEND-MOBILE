@@ -14,7 +14,7 @@ export default function RootLayout() {
     'LTKaraoke-Light': require('../assets/fonts/LTKaraoke-Light.ttf'),
     'LTKaraoke-Regular': require('../assets/fonts/LTKaraoke-Regular.ttf'),
     'LTKaraoke-Medium': require('../assets/fonts/LTKaraoke-SemiBold.ttf'),
-    'LTKaraoke-Semibold': require('../assets/fonts/LTKaraoke-SemiBold.ttf'), 
+    'LTKaraoke-Semibold': require('../assets/fonts/LTKaraoke-SemiBold.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -32,7 +32,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ProviderContext>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
         <Slot />
       </ProviderContext>
     </SafeAreaProvider>

@@ -1,4 +1,5 @@
 import Logo from "@/assets/images/avatar-con-anteojos.png";
+import LogoGobierno from "@/assets/images/logo-gobierno.png";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
@@ -187,9 +188,10 @@ export default function RegisterScreen() {
   );
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#fff" }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ flex: 1 }}>
+          <View className="items-center justify-end pb-4 h-20 bg-primary w-full rounded-br-3xl rounded-bl-3xl"></View>
           <PagerView ref={pagerRef} style={{ flex: 1 }} initialPage={0} onPageSelected={onPageSelected}>
             {/* Paso 1: Datos personales */}
             <View key="1" className="flex-1 bg-white justify-center px-6 py-8">
@@ -317,9 +319,8 @@ export default function RegisterScreen() {
                       <TouchableOpacity
                         key={`category-${index}-${category}`}
                         onPress={() => handleSelectInterest(category)}
-                        className={`m-1 px-4 py-2 border rounded-full ${
-                          selectedInterests.includes(category) ? "bg-primary border-primary" : "bg-white border-gray-300"
-                        }`}
+                        className={`m-1 px-4 py-2 border rounded-full ${selectedInterests.includes(category) ? "bg-primary border-primary" : "bg-white border-gray-300"
+                          }`}
                       >
                         <Text className={selectedInterests.includes(category) ? "text-white" : "text-gray-700"}>{category}</Text>
                       </TouchableOpacity>
@@ -341,9 +342,6 @@ export default function RegisterScreen() {
 
             {/* Paso 4: Elección de avatar */}
             <View key="4" className="flex-1 bg-white justify-center px-6 py-8">
-              <View className="items-center mb-6">
-                <Image source={Logo} className="w-32 h-32 rounded-full border-2 border-primary " accessible={true} />
-              </View>
               <Text className="text-3xl font-bold text-center mb-2 text-primary opacity-80">Selecciona el avatar que más te guste</Text>
               {loadingAvatars ? (
                 <Text className="text-gray-500 text-center mb-6 text-base">Cargando avatares...</Text>
@@ -371,6 +369,9 @@ export default function RegisterScreen() {
               {renderProgressDots()}
             </View>
           </PagerView>
+          <View className="items-center justify-end mt-16 pb-4 bg-primary w-full rounded-tr-3xl rounded-tl-3xl">
+            <Image source={LogoGobierno} className="w-full h-20" resizeMode="contain" />
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
