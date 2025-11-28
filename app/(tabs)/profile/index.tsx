@@ -53,7 +53,11 @@ const ProfileScreen = () => {
   const fetchProgress = async () => {
     try {
       const response = await getBookbyLatestProgress();
-      setProgress(response);
+      // Validar que no existan IDs duplicados
+      const uniqueResponse = response.filter((item: any, index: number, self: any[]) =>
+        index === self.findIndex((t) => t._id === item._id)
+      );
+      setProgress(uniqueResponse);
     } catch (error) {
       console.error("Error fetching progress:", error);
       setProgress([]);
@@ -63,7 +67,9 @@ const ProfileScreen = () => {
   const fetchUserMedals = async () => {
     if (user?.medals && Array.isArray(user.medals) && user.medals.length > 0) {
       try {
-        const promises = user.medals.map((medalId: string) => getMedals(medalId));
+        // Eliminar IDs duplicados antes de hacer las peticiones
+        const uniqueMedalIds = [...new Set(user.medals)];
+        const promises = uniqueMedalIds.map((medalId: string) => getMedals(medalId));
         const medalsData = await Promise.all(promises);
         setUserMedals(medalsData);
       } catch (error) {
