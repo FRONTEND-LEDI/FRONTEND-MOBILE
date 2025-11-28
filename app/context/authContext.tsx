@@ -1,8 +1,44 @@
 import { createContext } from "react";
 
-export type UserType = {
-  id: string;
+export interface UserPreference {
+  category: string[];
+  format: string[];
+  _id: string;
+}
 
+export interface LevelInfo {
+  level: number;
+  maxPoint: number;
+  img?: {
+    url_secura?: string;
+  };
+}
+
+export interface AvatarInfo {
+  avatars?: {
+    url_secura?: string;
+  };
+}
+
+export type UserType = {
+  _id: string;
+  name: string;
+  lastName: string;
+  userName: string;
+  birthDate: string;
+  email: string;
+  password?: string;
+  nivel: string;
+  level?: LevelInfo | string;
+  imgLevel?: string;
+  rol: string;
+  avatar?: string | AvatarInfo;
+  preference: UserPreference;
+  medals: any[];
+  point?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 } | null;
 
 export type AuthContextType = {

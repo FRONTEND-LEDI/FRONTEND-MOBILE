@@ -1,17 +1,25 @@
+import { CustomTabBar } from "@/components/CustomTabBar";
+import IAFAB from "@/components/IAFAB"; // Asegúrate que la ruta sea correcta
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import React from "react";
+import { View } from "react-native";
 
 export default function TabsLayout() {
+
+
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#f5f5f5",       
-        tabBarInactiveTintColor: "#F8D49A",        
+        tabBarActiveTintColor: "#f5f5f5",
+        tabBarInactiveTintColor: "#F8D49A",
         tabBarStyle: {
-          backgroundColor: "#D97706",           
-          borderTopWidth: 0,                    // elimina la línea superior
-          height: 80,                           
+          backgroundColor: "#D97706",
+          borderTopWidth: 0,
+          height: 80,
+
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -21,40 +29,45 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home/index"
         options={{
-          title: "Inicio",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="home" size={24} color={color} />
-          ),
+          title: "",
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="catalogue"
         options={{
-          title: "Catálogo",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="book" size={24} color={color} />
+          title: "",
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="book" size={size} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="ia_placeholder"
+        options={{
+          title: "",
+
+          tabBarIcon: () => (
+            <View style={{ top: 0, flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <IAFAB />
+            </View>
           ),
         }}
       />
+
       <Tabs.Screen
         name="club/index"
         options={{
-          title: "Club",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="people" size={24} color={color} />
-          ),
+          title: "",
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="people" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile/index"
         options={{
-          title: "Perfil",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="person" size={24} color={color} />
-          ),
+          title: "",
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="person" size={size} color={color} />,
         }}
       />
-      
     </Tabs>
   );
 }

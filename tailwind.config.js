@@ -11,14 +11,10 @@ module.exports = {
         tertiary: "#A7C257",
         white: "#FFFFFF",
         black: "#000000",
+        dark: "#131313",
+        light: "#fffbf2",
       },
     },
   },
-  plugins: [
-   
-  ],
-}
-
-// main
-// dev-tati
-// dev-luca
+  plugins: [],
+};

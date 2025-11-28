@@ -14,22 +14,20 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
         const token = await SecureStore.getItemAsync("token");
         if (!token) {
           setIsLogin(false);
+          setIsLoading(false);
           return;
         }
 
-        const res = await fetch(`http://${URI}/getUser`, {
+        const res = await fetch(`http://${URI}/oneUser`, {
           headers: {
             "Content-Type": "application/json",
-            "authorization": `Bearer ${token}`,
+            authorization: `Bearer ${token}`,
           },
         });
-
-        const data = await res.json();
-
-        console.log("data", data);
-
-        // Guardamos los datos del usuario en el contexto
-        setUser(data.user_data); 
+        const responseData = await res.json();
+        const userData = responseData.result;
+        
+        setUser(userData);
         setIsLogin(true);
       } catch (error) {
         console.error("Error al verificar sesión:", error);
@@ -51,7 +49,9 @@ const ProviderContext: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   return (
-    <authContext.Provider value={{ isLogin, setIsLogin, logout, isLoading, user, setUser }}>
+    <authContext.Provider
+      value={{ isLogin, setIsLogin, logout, isLoading, user, setUser }}
+    >
       {children}
     </authContext.Provider>
   );
