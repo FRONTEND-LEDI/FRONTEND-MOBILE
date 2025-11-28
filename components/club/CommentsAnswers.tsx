@@ -3,7 +3,20 @@ import colors from "@/constants/colors";
 import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Socket } from "socket.io-client";
 
 interface CommentsAnswersProps {
@@ -46,9 +59,10 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
       fetchAnswers();
 
       const handleComments = (data: Comment[]) => {
+        if (!comment) return;
         const safe = Array.isArray(data) ? data : [];
-        const filtered = safe.filter((c: Comment) => c.idComent && c.idComent === comment!._id);
-        setAnswers(filtered);
+        const filtered = safe.filter((c: Comment) => c.idComent === comment!._id);
+        setAnswers([...filtered].reverse());
         setIsFetching(false);
       };
 
@@ -84,10 +98,10 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
 
     socket.emit("create-answer", comment!._id, answerData);
     const optimisticAnswer: Comment = {
-      _id: "",
+      _id: Math.random().toString(),
       idComent: comment!._id,
       idForo: comment!.idForo,
-      idUser: user as any,
+      idUser: comment!.idUser,
       content: answerData.content,
       createdAt: new Date().toISOString(),
     };
@@ -97,13 +111,18 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
   };
 
   const AnswerItem: React.FC<{ answer: Comment }> = ({ answer }) => {
-    const replyUserName = (typeof answer.idUser === 'object' && answer.idUser?.userName) || "Usuario";
+    const replyUserName = (typeof answer.idUser === "object" && answer.idUser?.userName) || "Usuario";
+    const avatar = !comment?.idUser || typeof comment.idUser === "string" ? getInitials(replyUserName) : comment.idUser.avatar;
+    const imgLevel = !comment?.idUser || typeof comment.idUser === "string" ? getInitials(replyUserName) : comment.idUser.imgLevel;
+
     return (
       <View key={answer._id} className="py-3 border-b border-gray-100">
         <View className="flex-row items-start">
-          <View className="w-8 h-8 rounded-full bg-cyan-500 items-center justify-center mr-3 mt-0.5">
-            <Text className="text-sm font-bold text-white">{getInitials(replyUserName)}</Text>
+          <View className="w-10 h-10 rounded-full items-center justify-center mr-3">
+            <Image source={{ uri: avatar }} className="w-full h-full rounded-full" resizeMode="cover" />
           </View>
+          <Image source={{ uri: imgLevel }} className="absolute w-12 h-12 " resizeMode="cover" />
+
           <View className="flex-1">
             <Text className="font-bold text-sm mb-0.5 text-gray-700">{replyUserName}</Text>
             <Text className="text-base text-gray-700">{answer.content}</Text>
@@ -131,10 +150,10 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
                   <Text className="text-sm font-bold text-indigo-600 mb-2">Publicación Original</Text>
                   <View className="flex-row items-start">
                     <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
-                      <Text className="text-sm font-bold text-white">{getInitials(typeof comment.idUser === 'object' ? comment.idUser?.userName : "")}</Text>
+                      <Text className="text-sm font-bold text-white">{getInitials(typeof comment.idUser === "object" ? comment.idUser?.userName : "")}</Text>
                     </View>
                     <View className="flex-1">
-                      <Text className="font-bold text-sm mb-0.5">{(typeof comment.idUser === 'object' ? comment.idUser?.userName : "Usuario")}</Text>
+                      <Text className="font-bold text-sm mb-0.5">{typeof comment.idUser === "object" ? comment.idUser?.userName : "Usuario"}</Text>
                       <Text className="text-base text-gray-800">{comment.content}</Text>
                     </View>
                   </View>
@@ -151,19 +170,17 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
             </ScrollView>
 
             <View className="p-3 border-t border-gray-200 bg-white flex-row items-center">
-                <TextInput
-                  className="flex-1 bg-gray-100 rounded-full py-2.5 px-3.5 text-base"
-                  style={{ maxHeight: 120 }}
-                  placeholder={`Responder a ${(typeof comment?.idUser === 'object' ? comment?.idUser?.userName : "Usuario")}...`}
-                  value={newAnswer}
-                  onChangeText={setNewAnswer}
-                  multiline
-                  editable={!isAuthLoading}
-                />
+              <TextInput
+                className="flex-1 bg-gray-100 rounded-full py-2.5 px-3.5 text-base"
+                style={{ maxHeight: 120 }}
+                placeholder={`Responder a ${typeof comment?.idUser === "object" ? comment?.idUser?.userName : "Usuario"}...`}
+                value={newAnswer}
+                onChangeText={setNewAnswer}
+                multiline
+                editable={!isAuthLoading}
+              />
               <TouchableOpacity
-                className={`w-11 h-11 rounded-full ml-2.5 justify-center items-center ${
-                  newAnswer.trim() && !isAuthLoading ? "bg-orange-600" : "bg-gray-300"
-                }`}
+                className={`w-11 h-11 rounded-full ml-2.5 justify-center items-center ${newAnswer.trim() && !isAuthLoading ? "bg-orange-600" : "bg-gray-300"}`}
                 onPress={handleSendAnswer}
                 disabled={!newAnswer.trim() || isAuthLoading}
               >

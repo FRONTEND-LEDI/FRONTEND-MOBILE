@@ -20,8 +20,8 @@ export interface Book {
   genre?: string;
   format?: string;
 }
-//Send to post /quiz/:id
-export interface QuizOptionRes {
+
+export interface QuizOption {
   textOption: string;
   status: boolean;
 }
@@ -30,21 +30,12 @@ export interface QuizResponse {
   title: string;
   scenery: string;
   page: number;
-  option: QuizOptionRes[];
+  option: QuizOption[];
   completed?: boolean;
   score?: number;
   totalQuestions?: number;
 }
-interface QuizOptionReq {
-  text: string;
-  status: boolean;
-}
-interface QuizRequest {
-  title: string;
-  scenery: string;
-  page: number;
-  option?: QuizOptionReq;
-}
+
 const getToken = async () => {
   const token = await SecureStore.getItemAsync("token");
   if (!token) {
@@ -112,7 +103,7 @@ export const startQuiz = async (bookId: string): Promise<QuizResponse> => {
   const data = await response.json();
   return normalizeQuizResponse(data);
 };
-export const submitQuizAnswer = async (bookId: string, quiz: QuizRequest): Promise<QuizResponse> => {
+export const submitQuizAnswer = async (bookId: string, selectedOption: string, isCorrect: boolean, currentPage: number): Promise<QuizResponse> => {
   const token = await getToken();
   const response = await fetch(`${API_BASE_URL}/quiz/${bookId}`, {
     method: "POST",
@@ -122,7 +113,9 @@ export const submitQuizAnswer = async (bookId: string, quiz: QuizRequest): Promi
       "x-client": "mobile",
     },
     body: JSON.stringify({
-      quiz,
+      option: selectedOption,
+      status: isCorrect,
+      page: currentPage,
     }),
   });
   console.log("submitQuizAnswer response status:", response.status);
@@ -158,4 +151,49 @@ export const submitQuiz = async (bookId: string, payload: any): Promise<QuizResp
   }
   const data = await response.json();
   return normalizeQuizResponse(data);
+};
+// Frontend - Manejar la respuesta final
+export const handleFinalQuizAnswer = async (
+  idBook: string,
+  answer: {
+    text: string;
+    status: boolean;
+    title: string;
+    scenery: string;
+    page: number;
+  }
+) => {
+  try {
+    const token = getToken();
+    const response = await fetch(`http://localhost:TU_PUERTO/ai/quiz/${idBook}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: answer.title,
+        scenery: answer.scenery,
+        page: answer.page,
+        option: {
+          text: answer.text,
+          status: answer.status,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    // Verificar si es la respuesta final (ResGameQuizFinal)
+    if (data.completed) {
+      console.log("¡JUEGO TERMINADO!");
+      console.log("Título:", data.title);
+      console.log("Mensaje final:", data.textCompleted);
+      console.log("PUNTUACIÓN FINAL:", data.score); // ← Aquí están los puntos
+
+      // Guardar puntos en tu BD/estado del usuario
+    }
+  } catch (error) {
+    console.error("Error en pregunta final:", error);
+  }
 };
