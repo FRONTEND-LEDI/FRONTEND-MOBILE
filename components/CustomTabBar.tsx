@@ -81,7 +81,12 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     }
   };
 
-  
+
+
+  const focusedOptions = descriptors[state.routes[state.index].key].options;
+  if ((focusedOptions.tabBarStyle as any)?.display === "none") {
+    return null;
+  }
 
   return (
     <View style={styles.tabBarContainer}>

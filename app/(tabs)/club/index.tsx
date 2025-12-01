@@ -6,7 +6,7 @@ import { Comment, Foro } from "@/types/club";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStorage from "expo-secure-store";
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { io, Socket } from "socket.io-client";
 import DisplayedComment from "../../../components/club/_DisplayComments";
 import CommentsAnswers from "../../../components/club/CommentsAnswers";
@@ -161,10 +161,14 @@ export default function Forum() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-white">
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+      className="flex-1 bg-white"
+    >
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: 120,
+          paddingBottom: 20, // Reduced padding since input is not absolute
           paddingHorizontal: 5,
           paddingTop: 30,
         }}
@@ -196,7 +200,7 @@ export default function Forum() {
       </ScrollView>
 
       {selectedForoId ? (
-        <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+        <View className="bg-white p-4 border-t border-gray-200">
           <View className="flex-row items-center bg-gray-100 rounded-full border border-gray-300 p-1 shadow-md">
             <TextInput
               className="flex-1 h-10 px-4 py-1 text-base text-gray-800"
