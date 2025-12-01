@@ -31,6 +31,11 @@ const generateId = () =>
 export default function ChatScreen() {
   const { user } = useContext(authContext);
 
+  const userAvatarUri =
+    typeof user?.avatar === "string"
+      ? user.avatar
+      : user?.avatar?.avatars?.url_secura;
+
 
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -235,9 +240,9 @@ export default function ChatScreen() {
 
               {m.isUser && (
                 <View style={styles.avatarUser}>
-                  {user?.avatar? (
+                  {userAvatarUri ? (
                     <Image
-                      source={{ uri: user.avatar }}
+                      source={{ uri: userAvatarUri }}
                       style={styles.avatarUser}
                       resizeMode="cover"
                     />
