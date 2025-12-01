@@ -247,9 +247,11 @@ export default function ChatScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <View style={styles.avatarUser}>
-                      <Ionicons name="person-circle" size={22} color="#fff" />
-                    </View>
+                    <Image
+                      source={{ uri: "https://c1.klipartz.com/pngpicture/1019/109/sticker-png-circle-logo-user-management-information-technology-company-user-profile-orange.png" }}
+                      style={styles.avatarUser}
+                      resizeMode="cover"
+                    />
                   )}
                 </View>
               )}
