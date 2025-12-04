@@ -57,8 +57,13 @@ export default function Forum() {
         try {
           const safeData = Array.isArray(data) ? data : [];
           const mainComments = safeData.filter((comment) => !comment.idComent);
+
           if (!selectedForoId) {
             setDisplayedComment([...mainComments].reverse());
+          } else {
+            // Si hay un foro seleccionado, filtramos de la lista global actualizada
+            const foroComments = mainComments.filter((c) => c.idForo === selectedForoId);
+            setDisplayedComment([...foroComments].reverse());
           }
         } catch (error) {
           console.error("Error socket get comments", error);
@@ -73,16 +78,6 @@ export default function Forum() {
         if (!selectedForoId || selectedForoId === newComment.idForo) {
           setDisplayedComment((prev) => [newComment, ...prev]);
         }
-      });
-
-      currentSocket.on("update", (data: Comment[]) => {
-        const mainComments = data.filter((comment) => !comment.idComent);
-        setDisplayedComment([...mainComments].reverse());
-      });
-
-      currentSocket.on("Delete", (data: Comment[]) => {
-        const mainComments = data.filter((comment) => !comment.idComent);
-        setDisplayedComment([...mainComments].reverse());
       });
 
       currentSocket.on("error", (error: { msg: string }) => {
@@ -120,6 +115,13 @@ export default function Forum() {
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
+  }, []); // Quitamos dependencias para que el socket no se reconecte al cambiar de filtro
+
+  // Efecto separado para manejar cambios de filtro sin desconectar el socket
+  useEffect(() => {
+    if (socketRef.current && socketRef.current.connected) {
+      fetchComments(selectedForoId);
+    }
   }, [selectedForoId, fetchComments]);
 
   const handleTopicPress = (foroId: string) => {
