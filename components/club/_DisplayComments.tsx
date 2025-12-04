@@ -151,7 +151,21 @@ const DisplayedComment = ({ comment, foros, socket, onViewThread }: Props) => {
       )}
 
       <Text className="text-xs text-gray-400 mt-2 text-right">
-        {comment.createdAt ? new Date(comment.createdAt).toLocaleTimeString() : ""}
+        {comment.createdAt
+          ? (() => {
+            const now = new Date();
+            const commentDate = new Date(comment.createdAt);
+            const diffMs = now.getTime() - commentDate.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            if (diffHours >= 24) {
+              const diffDays = Math.floor(diffHours / 24);
+              return `Hace ${diffDays} día${diffDays > 1 ? "s" : ""}`;
+            } else {
+              return commentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+          })()
+          : ""}
       </Text>
       <View className="flex-row justify-between items-center mt-3 pt-2 border-t border-orange-200">
         <TouchableOpacity className="flex-row items-center" onPress={() => onViewThread(comment)}>
