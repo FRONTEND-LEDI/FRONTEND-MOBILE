@@ -2,7 +2,7 @@ import { authContext } from "@/app/context/authContext";
 import colors from "@/constants/colors";
 import { Comment, Foro } from "@/types/club";
 import { Ionicons, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Alert, Image, Modal, Pressable, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Socket } from "socket.io-client";
 
@@ -19,14 +19,27 @@ const DisplayedComment = ({ comment, foros, socket, onViewThread }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(comment.content);
 
-  const userName = !comment.idUser || typeof comment.idUser === "string" ? "Usuario" : comment.idUser.userName || "Usuario";
+  const userName =
+    !comment.idUser || typeof comment.idUser === "string" ? "Usuario" : comment.idUser.userName || "Usuario";
+
   const getInitials = (name: string) => name.charAt(0).toUpperCase();
-  const avatar = !comment.idUser || typeof comment.idUser === "string" ? getInitials(userName) : comment.idUser.avatar;
-  const imgLevel = !comment.idUser || typeof comment.idUser === "string" ? getInitials(userName) : comment.idUser.imgLevel;
-  const isCommentOwner = user?._id && comment.idUser && typeof comment.idUser === "object" && user._id === comment.idUser._id;
-  console.log("COMENTARIOS", comment);
+
+  // Lógica corregida: No mezclar URL con iniciales en la misma variable para Image
+  const userObj = (!comment.idUser || typeof comment.idUser === "string") ? null : comment.idUser;
+  const avatarUrl = userObj?.avatar;
+  const levelUrl = userObj?.imgLevel;
+  const isCommentOwner =
+    user?._id && comment.idUser && typeof comment.idUser === "object" && user._id === comment.idUser._id;
+  useEffect(() => {
+    setEditedText(comment.content);
+  }, [comment.content]);
+
   const handleDelete = () => {
-    if (!socket) return;
+    if (!socket || !socket.connected) {
+      Alert.alert("Error", "No hay conexión con el servidor.");
+      return;
+    }
+
     Alert.alert("Eliminar", "¿Seguro que deseas eliminar este comentario?", [
       { text: "Cancelar", style: "cancel" },
       {
@@ -41,24 +54,72 @@ const DisplayedComment = ({ comment, foros, socket, onViewThread }: Props) => {
   };
 
   const handleSaveEdit = () => {
-    if (!socket) return;
-    if (!editedText.trim()) return;
+    // 1. Validaciones Locales
+    if (!socket || !socket.connected) {
+      Alert.alert("Error", "No hay conexión. Intenta más tarde.");
+      return;
+    }
 
-    socket.emit("update-coment", comment._id, {
-      content: editedText.trim(),
-    });
+    const textToSend = editedText.trim();
+    if (!textToSend) {
+      Alert.alert("Atención", "El comentario no puede estar vacío.");
+      return;
+    }
 
-    setIsEditing(false);
-    setOptionsVisible(false);
+    if (textToSend === comment.content) {
+      setIsEditing(false);
+      setOptionsVisible(false);
+      return;
+    }
+
+    // 2. Manejo de Error del Servidor (Listener temporal)
+    // Escuchamos si el servidor devuelve un error inmediatamente después de nuestra acción
+    const errorHandler = (err: { msg: string }) => {
+      Alert.alert("Error al editar", err.msg || "No se pudieron guardar los cambios.");
+      // Si falla, no salimos del modo edición para que el usuario pueda corregir
+    };
+
+    socket.once("error", errorHandler);
+
+    // 3. Emitir evento
+    try {
+      socket.emit("update-coment", comment._id, {
+        content: textToSend,
+      });
+
+      // UI Optimista: Asumimos éxito y cerramos.
+      // Si el socket.once('error') se dispara, el usuario verá la alerta.
+      setIsEditing(false);
+      setOptionsVisible(false);
+
+      // Limpieza de seguridad: quitamos el listener después de 2s si no hubo error
+      setTimeout(() => {
+        socket.off("error", errorHandler);
+      }, 2000);
+    } catch (error) {
+      console.error("Error cliente socket:", error);
+      Alert.alert("Error", "Fallo interno al enviar la solicitud.");
+      socket.off("error", errorHandler);
+    }
   };
 
   return (
     <View className="bg-orange-100 p-3 rounded-xl mb-3 border border-orange-300 shadow w-full">
       <View className="flex-row items-center mb-1">
-        <View className="w-10 h-10 rounded-full items-center justify-center mr-3">
-          <Image source={{ uri: avatar }} className="w-full h-full rounded-full" resizeMode="cover" />
+        {/* Avatar: Si hay URL muestra imagen, si no, muestra iniciales */}
+        <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-orange-200 overflow-hidden">
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} className="w-full h-full" resizeMode="cover" />
+          ) : (
+            <Text className="text-orange-800 font-bold text-lg">{getInitials(userName)}</Text>
+          )}
         </View>
-        <Image source={{ uri: imgLevel }} className="absolute w-12 h-12 " resizeMode="cover" />
+
+        {/* Nivel: Solo mostrar si existe la URL */}
+        {levelUrl && (
+          <Image source={{ uri: levelUrl }} className="absolute w-12 h-12" resizeMode="cover" style={{ left: -5, top: -5 }} />
+        )}
+
         <Text className="text-base font-semibold text-orange-800">{userName}</Text>
         {isCommentOwner && (
           <TouchableOpacity className="ml-auto p-1" onPress={() => setOptionsVisible(true)}>
@@ -68,7 +129,12 @@ const DisplayedComment = ({ comment, foros, socket, onViewThread }: Props) => {
       </View>
 
       {isEditing ? (
-        <TextInput className="bg-white p-2 rounded-lg border border-gray-300" value={editedText} onChangeText={setEditedText} multiline />
+        <TextInput
+          className="bg-white p-2 rounded-lg border border-gray-300"
+          value={editedText}
+          onChangeText={setEditedText}
+          multiline
+        />
       ) : (
         <Text className="text-base text-gray-800 ml-1">{comment.content}</Text>
       )}
@@ -84,7 +150,23 @@ const DisplayedComment = ({ comment, foros, socket, onViewThread }: Props) => {
         </View>
       )}
 
-      <Text className="text-xs text-gray-400 mt-2 text-right">{comment.createdAt ? new Date(comment.createdAt).toLocaleTimeString() : ""}</Text>
+      <Text className="text-xs text-gray-400 mt-2 text-right">
+        {comment.createdAt
+          ? (() => {
+            const now = new Date();
+            const commentDate = new Date(comment.createdAt);
+            const diffMs = now.getTime() - commentDate.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            if (diffHours >= 24) {
+              const diffDays = Math.floor(diffHours / 24);
+              return `Hace ${diffDays} día${diffDays > 1 ? "s" : ""}`;
+            } else {
+              return commentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+          })()
+          : ""}
+      </Text>
       <View className="flex-row justify-between items-center mt-3 pt-2 border-t border-orange-200">
         <TouchableOpacity className="flex-row items-center" onPress={() => onViewThread(comment)}>
           <Ionicons name="chatbubble-outline" size={20} color={colors.secondary} />
