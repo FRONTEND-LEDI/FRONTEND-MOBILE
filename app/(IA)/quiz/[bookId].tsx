@@ -1,10 +1,4 @@
-import {
-  Book,
-  QuizOptionRes, // Usamos el tipo de respuesta para las opciones
-  getBookById,
-  startQuiz,
-  submitQuizAnswer,
-} from "@/app/api/quizApi";
+import { Book, QuizOption, getBookById, startQuiz, submitQuizAnswer } from "@/app/api/quizApi";
 import colors from "@/constants/colors";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -13,9 +7,7 @@ import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const MAX_LIVES = 2;
-const TOTAL_QUESTIONS = 4;
 
-// Componente para renderizar la pregunta con efecto typewriter
 const TypewriterQuestion = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
@@ -60,10 +52,27 @@ const TypewriterQuestion = ({ text }: { text: string }) => {
   );
 };
 
-const GameHeader = ({ points, bookTitle, lives, page }: { points: number; bookTitle: string; lives: number; page: number }) => {
+const GameHeader = ({
+  points,
+  bookTitle,
+  lives,
+  page,
+}: {
+  points: number;
+  bookTitle: string;
+  lives: number;
+  page: number;
+}) => {
   const lifeIcons = [];
   for (let i = 0; i < MAX_LIVES; i++) {
-    lifeIcons.push(<MaterialIcons key={i} name={i < lives ? "favorite" : "favorite-border"} size={24} color={i < lives ? "#EF4444" : "#D1D5DB"} />);
+    lifeIcons.push(
+      <MaterialIcons
+        key={i}
+        name={i < lives ? "favorite" : "favorite-border"}
+        size={24}
+        color={i < lives ? "#EF4444" : "#D1D5DB"}
+      />
+    );
   }
 
   return (
@@ -96,7 +105,7 @@ const GameHeader = ({ points, bookTitle, lives, page }: { points: number; bookTi
           marginTop: 4,
         }}
       >
-        Pregunta: {page} / {TOTAL_QUESTIONS}
+        Pregunta: {page}
       </Text>
     </View>
   );
@@ -108,9 +117,8 @@ export default function QuizScreen() {
 
   const [book, setBook] = useState<Book | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
-  // Usamos QuizOptionRes para el estado de las opciones
-  const [options, setOptions] = useState<QuizOptionRes[]>([]);
-  const [selectedOption, setSelectedOption] = useState<QuizOptionRes | null>(null);
+  const [options, setOptions] = useState<QuizOption[]>([]);
+  const [selectedOption, setSelectedOption] = useState<QuizOption | null>(null);
   const [page, setPage] = useState(1);
   const [showFeedback, setShowFeedback] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
@@ -154,10 +162,9 @@ export default function QuizScreen() {
 
       console.log("Respuesta inicial del quiz:", initialResponse);
 
-      // CORRECCIÓN: Tu interfaz usa 'option' (singular) como array, no 'options'
-      if (initialResponse.option && Array.isArray(initialResponse.option) && initialResponse.option.length > 0) {
-        setCurrentQuestion(initialResponse.scenery);
-        setOptions(initialResponse.option);
+      if (initialResponse.options && Array.isArray(initialResponse.options) && initialResponse.options.length > 0) {
+        setCurrentQuestion(initialResponse.title || "");
+        setOptions(initialResponse.options);
         setPage(initialResponse.page || 1);
       } else {
         throw new Error(`No se recibieron opciones del servidor. Respuesta: ${JSON.stringify(initialResponse)}`);
@@ -174,7 +181,7 @@ export default function QuizScreen() {
     initializeQuiz();
   }, [initializeQuiz]);
 
-  const handleSelectOption = (option: QuizOptionRes) => {
+  const handleSelectOption = (option: QuizOption) => {
     if (quizCompleted || showFeedback || isAnswering) return;
     setSelectedOption(option);
   };
@@ -189,20 +196,15 @@ export default function QuizScreen() {
     let newLives = lives;
     let gameShouldEnd = false;
 
-    // 1. Manejar puntuación y vidas
     if (selectedOption.status) {
-      newScore += 10; // Sumar puntos si es correcta
+      newScore += 10;
       setCurrentScore(newScore);
     } else {
       newLives -= 1;
       setLives(newLives);
     }
 
-    // 2. Comprobar condiciones de fin de juego
     if (newLives <= 0) {
-      gameShouldEnd = true;
-    }
-    if (page === TOTAL_QUESTIONS) {
       gameShouldEnd = true;
     }
 
@@ -216,11 +218,9 @@ export default function QuizScreen() {
     }
 
     try {
-      // --- ADAPTACIÓN DE DATOS PARA LA API ---
-      // Creamos el objeto QuizRequest tal como lo pide la interfaz en quizApi.ts
       const quizPayload = {
         title: book.title,
-        scenery: currentQuestion, // Enviamos el escenario actual (pregunta)
+        scenery: currentQuestion,
         page: page,
         option: {
           text: selectedOption.textOption,
@@ -228,19 +228,17 @@ export default function QuizScreen() {
         },
       };
 
-      // Enviamos el objeto completo como segundo argumento
       const response = await submitQuizAnswer(bookId, quizPayload);
 
       console.log("Respuesta del quiz recibida:", response);
 
-      if (response.completed === true || response.score !== undefined) {
+      if (response.completed === true) {
         setFinalScore(response.score ?? newScore);
         setQuizCompleted(true);
-      } else if (response.option && response.option.length > 0) {
-        // CORRECCIÓN: Usar 'response.option' (singular)
-        setCurrentQuestion(response.scenery);
-        setOptions(response.option);
-        setPage(response.page);
+      } else if (response.options && response.options.length > 0) {
+        setCurrentQuestion(response.title || "");
+        setOptions(response.options);
+        setPage(response.page || page + 1);
         setSelectedOption(null);
         setShowFeedback(false);
       } else {
@@ -389,10 +387,8 @@ export default function QuizScreen() {
       ) : (
         <ScrollView style={{ flex: 1 }}>
           <View style={{ padding: 20 }}>
-            {/* Pregunta con efecto typewriter */}
             <TypewriterQuestion text={currentQuestion} />
 
-            {/* Opciones (Grid 2x2) */}
             <View
               style={{
                 flexDirection: "row",
@@ -430,7 +426,6 @@ export default function QuizScreen() {
                     opacity = 0.5;
                   }
                   if (option.status) {
-                    // Resaltar la correcta si no se eligió
                     backgroundColor = "#22C55E";
                     borderColor = "#16A34A";
                     textColor = "white";
@@ -482,7 +477,11 @@ export default function QuizScreen() {
                           borderColor: "#D1D5DB",
                         }}
                       >
-                        <MaterialIcons name={option.status ? "check" : "close"} size={20} color={option.status ? "green" : "red"} />
+                        <MaterialIcons
+                          name={option.status ? "check" : "close"}
+                          size={20}
+                          color={option.status ? "green" : "red"}
+                        />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -526,7 +525,9 @@ export default function QuizScreen() {
                   backgroundColor: !selectedOption || isAnswering ? "#D1D5DB" : colors.primary,
                 }}
               >
-                <Text style={{ color: "white", fontSize: 18, fontWeight: "bold" }}>{isAnswering ? "Procesando..." : "Confirmar Respuesta"}</Text>
+                <Text style={{ color: "white", fontSize: 18, fontWeight: "bold" }}>
+                  {isAnswering ? "Procesando..." : "Confirmar Respuesta"}
+                </Text>
               </TouchableOpacity>
             )}
           </View>

@@ -26,21 +26,31 @@ export interface QuizOption {
   status: boolean;
 }
 
-export interface QuizResponse {
+export interface QuizPayload {
   title: string;
   scenery: string;
   page: number;
-  option: QuizOption[];
+  score?: number;
+  option: {
+    text: string;
+    status: boolean;
+  };
+}
+
+export interface QuizResponse {
+  title: string;
+  scenery?: string;
+  page?: number;
+  options?: QuizOption[];
   completed?: boolean;
   score?: number;
+  textCompleted?: string;
   totalQuestions?: number;
 }
 
 const getToken = async () => {
   const token = await SecureStore.getItemAsync("token");
-  if (!token) {
-    throw new Error("Token no encontrado");
-  }
+  if (!token) throw new Error("Token no encontrado");
   return token;
 };
 
@@ -53,16 +63,25 @@ const normalizeBookData = (data: any[]): Book[] => {
   }));
 };
 
+const normalizeQuizResponse = (data: any): QuizResponse => {
+  return {
+    title: data.title || "",
+    scenery: data.scenery || "",
+    page: data.page ?? 1,
+    options: Array.isArray(data.options) ? data.options : [],
+    completed: data.completed === true,
+    score: typeof data.score === "number" ? data.score : undefined,
+    textCompleted: data.textCompleted || "¡Quiz completado!",
+    totalQuestions: data.totalQuestions || 0,
+  };
+};
+
 export const getNarrativeBooks = async (): Promise<Book[]> => {
   const token = await getToken();
   const response = await fetch(`${API_BASE_URL}/books/narrative`, {
     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}`, "x-client": "mobile" },
   });
-
-  console.log("getNarrativeBooks data:", response);
-  if (!response.ok) {
-    throw new Error("Error al obtener libros narrativos");
-  }
+  if (!response.ok) throw new Error("Error al obtener libros narrativos");
   const data = await response.json();
   return normalizeBookData(data.result || data);
 };
@@ -70,17 +89,10 @@ export const getNarrativeBooks = async (): Promise<Book[]> => {
 export const getBookById = async (bookId: string): Promise<Book> => {
   const token = await getToken();
   const response = await fetch(`${API_BASE_URL}/book/${bookId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
   });
-  console.log("getBookById response status:", response);
-  if (!response.ok) {
-    throw new Error("Error al obtener los detalles del libro");
-  }
+  if (!response.ok) throw new Error("Error al obtener los detalles del libro");
   const data = await response.json();
-
   const normalized = normalizeBookData([data.result || data]);
   return normalized[0];
 };
@@ -89,111 +101,24 @@ export const startQuiz = async (bookId: string): Promise<QuizResponse> => {
   const token = await getToken();
   const response = await fetch(`${API_BASE_URL}/quiz/${bookId}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${token}`,
-      "x-client": "mobile",
-    },
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}`, "x-client": "mobile" },
     body: JSON.stringify({}),
   });
-  console.log("startQuiz response status:", response.status);
-  if (!response.ok) {
-    throw new Error("Error al iniciar el quiz");
-  }
-  const data = await response.json();
-  return normalizeQuizResponse(data);
-};
-export const submitQuizAnswer = async (bookId: string, selectedOption: string, isCorrect: boolean, currentPage: number): Promise<QuizResponse> => {
-  const token = await getToken();
-  const response = await fetch(`${API_BASE_URL}/quiz/${bookId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${token}`,
-      "x-client": "mobile",
-    },
-    body: JSON.stringify({
-      option: selectedOption,
-      status: isCorrect,
-      page: currentPage,
-    }),
-  });
-  console.log("submitQuizAnswer response status:", response.status);
-  if (!response.ok) {
-    throw new Error("Error al enviar la respuesta del quiz");
-  }
+  if (!response.ok) throw new Error("Error al iniciar el quiz");
   const data = await response.json();
   return normalizeQuizResponse(data);
 };
 
-const normalizeQuizResponse = (data: any): QuizResponse => {
-  return {
-    title: data.title || "",
-    scenery: data.scenery || "",
-    page: data.page ?? 1,
-    option: Array.isArray(data.options) ? data.options : [],
-    completed: data.completed === true,
-    score: typeof data.score === "number" ? data.score : undefined,
-    totalQuestions: data.totalQuestions || 0,
-  };
-};
-
-export const submitQuiz = async (bookId: string, payload: any): Promise<QuizResponse> => {
+export const submitQuizAnswer = async (bookId: string, payload: QuizPayload): Promise<QuizResponse> => {
   const token = await getToken();
   const response = await fetch(`${API_BASE_URL}/quiz/${bookId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}`, "x-client": "mobile" },
     body: JSON.stringify(payload),
   });
-  console.log("submitQuiz response status:", response.status);
-  if (!response.ok) {
-    throw new Error("Error al enviar la respuesta del quiz");
-  }
+
+  if (!response.ok) throw new Error("Error al enviar respuesta");
+
   const data = await response.json();
   return normalizeQuizResponse(data);
-};
-// Frontend - Manejar la respuesta final
-export const handleFinalQuizAnswer = async (
-  idBook: string,
-  answer: {
-    text: string;
-    status: boolean;
-    title: string;
-    scenery: string;
-    page: number;
-  }
-) => {
-  try {
-    const token = getToken();
-    const response = await fetch(`http://localhost:TU_PUERTO/ai/quiz/${idBook}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title: answer.title,
-        scenery: answer.scenery,
-        page: answer.page,
-        option: {
-          text: answer.text,
-          status: answer.status,
-        },
-      }),
-    });
-
-    const data = await response.json();
-
-    // Verificar si es la respuesta final (ResGameQuizFinal)
-    if (data.completed) {
-      console.log("¡JUEGO TERMINADO!");
-      console.log("Título:", data.title);
-      console.log("Mensaje final:", data.textCompleted);
-      console.log("PUNTUACIÓN FINAL:", data.score); // ← Aquí están los puntos
-
-      // Guardar puntos en tu BD/estado del usuario
-    }
-  } catch (error) {
-    console.error("Error en pregunta final:", error);
-  }
 };
