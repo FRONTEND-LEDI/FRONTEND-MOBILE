@@ -2,6 +2,7 @@ import { getNarrativeBooks } from "@/app/api/catalogue";
 import colors from "@/constants/colors";
 import { AuthorType } from "@/types/author";
 import { BookType } from "@/types/book";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, Stack, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from "react-native";
@@ -21,24 +22,22 @@ function getCoverUrl(cover: BookType["bookCoverImage"]) {
 const BookCard = ({ item }: { item: BookType }) => {
   return (
     <Link href={`/(IA)/quiz/${item._id}`} asChild>
-      <TouchableOpacity className="flex-1 m-2 bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200 active:opacity-70 active:scale-95">
+      <TouchableOpacity
+        className="flex-1 m-2 bg-white rounded-2xl overflow-hidden shadow-md active:opacity-90 active:scale-95"
+        style={{ elevation: 4 }}
+      >
         <Image source={{ uri: getCoverUrl(item.bookCoverImage) }} className="w-full h-48" resizeMode="cover" />
-        <View className="p-4">
+        <View className="p-3">
           <Text className="text-base font-bold text-gray-800" numberOfLines={1}>
             {item.title}
           </Text>
-          <Text className="text-sm text-gray-500 mb-2" numberOfLines={1}>
+          <Text className="text-xs text-gray-500 mb-2 font-medium" numberOfLines={1}>
             {getAuthorName(item.author)}
           </Text>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-1">
             {item.genre && (
-              <View className="px-2 py-0.5 bg-blue-100 rounded-full">
-                <Text className="text-xs text-blue-800">{item.genre}</Text>
-              </View>
-            )}
-            {item.format && (
-              <View className="px-2 py-0.5 bg-orange-100 rounded-full">
-                <Text className="text-xs text-orange-800">{item.format}</Text>
+              <View className="px-2 py-0.5 bg-orange-100 rounded-md border border-orange-200">
+                <Text className="text-[10px] font-bold text-orange-700 uppercase">{item.genre}</Text>
               </View>
             )}
           </View>
@@ -100,33 +99,39 @@ export default function BookSelectorScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <Stack.Screen options={{ headerShown: false }} />
-      <View className="p-5 border-b border-gray-200">
-        <Text className="text-3xl font-bold text-orange-500 text-center">Preguntados</Text>
-        <Text className="text-base text-gray-500 text-center mt-1">Elige un libro narrativo para jugar al quiz</Text>
-      </View>
+    <LinearGradient
+      colors={["#F59E0B", "#D97706", "#92400E"]}
+      style={{ flex: 1 }}
+    >
+      <SafeAreaView className="flex-1">
+        <Stack.Screen options={{ headerShown: false }} />
+        <View className="p-6 pb-2">
+          <Text className="text-4xl font-black text-white text-center shadow-sm">PREGUNTADOS</Text>
+          <Text className="text-sm text-orange-100 text-center mt-1 font-medium">Elige una historia para comenzar el desafío</Text>
+        </View>
 
-      <FlatList
-        data={books}
-        renderItem={BookCard}
-        keyExtractor={(item) => item._id}
-        numColumns={2}
-        className="flex-1 p-2"
-        ListEmptyComponent={
-          <View className="flex-1 justify-center items-center mt-20 p-6">
-            <Text className="text-lg text-gray-500 mb-6 text-center">No se encontraron libros narrativos disponibles.</Text>
-            <TouchableOpacity onPress={() => router.back()} className="bg-gray-200 px-8 py-3 rounded-full">
-              <Text className="text-gray-800 text-base font-semibold">Volver</Text>
-            </TouchableOpacity>
-          </View>
-        }
-        ListFooterComponent={
-          <View className="p-4 items-center mt-4">
-            <Text className="text-sm text-gray-400 text-center">💡 Solo se muestran libros del género Narrativo para el quiz</Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+        <FlatList
+          data={books}
+          renderItem={BookCard}
+          keyExtractor={(item) => item._id}
+          numColumns={2}
+          className="flex-1 p-2"
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={
+            <View className="flex-1 justify-center items-center mt-20 p-6 bg-white/10 rounded-3xl mx-4">
+              <Text className="text-lg text-white mb-6 text-center font-bold">No se encontraron libros narrativos disponibles.</Text>
+              <TouchableOpacity onPress={() => router.back()} className="bg-white px-8 py-3 rounded-full shadow-lg">
+                <Text className="text-orange-600 text-base font-bold">Volver</Text>
+              </TouchableOpacity>
+            </View>
+          }
+          ListFooterComponent={
+            <View className="p-4 items-center mt-2">
+              <Text className="text-xs text-orange-200 text-center font-medium">Solo se muestran libros del género Narrativo</Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }

@@ -1,4 +1,6 @@
+import LogoAlbertazzi from '@/assets/images/alver.png';
 import Logo from '@/assets/images/avatar-con-anteojos.png';
+import LogoIPF from '@/assets/images/ipf.png';
 import LogoGobierno from '@/assets/images/logo-gobierno.png';
 import { URI } from "@/constants/ip";
 import { Ionicons } from "@expo/vector-icons";
@@ -77,7 +79,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       className="flex-1"
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
     >
       <StatusBar barStyle="light-content" />
@@ -87,7 +89,7 @@ export default function LoginScreen() {
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
-          className='bg-[#FFF]'
+          className='bg-[#FFF] flex-1'
         >
           <View className="items-center justify-end pb-4 h-20 bg-primary w-full rounded-br-3xl rounded-bl-3xl">
 
@@ -197,8 +199,10 @@ export default function LoginScreen() {
             </View>
 
           </View>
-          <View className="items-center justify-end mt-16 pb-4 bg-primary w-full rounded-tr-3xl rounded-tl-3xl">
-            <Image source={LogoGobierno} className="w-full h-20" resizeMode="contain" />
+          <View className="items-center justify-center flex-row gap-4 mt-20 py-5 bg-primary w-full rounded-tr-3xl rounded-tl-3xl">
+            <Image source={LogoGobierno} className="w-24 h-12" resizeMode="contain" />
+            <Image source={LogoAlbertazzi} className="w-24 h-12" resizeMode="contain" />
+            <Image source={LogoIPF} className="w-24 h-12" resizeMode="contain" />
           </View>
         </ScrollView>
 

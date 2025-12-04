@@ -2,7 +2,7 @@ import { chat, memory } from "@/app/api/chat";
 import { authContext } from "@/app/context/authContext";
 import Header from "@/components/Header";
 import { Message } from "@/types/chat";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, {
   useContext,
   useEffect,
@@ -247,11 +247,7 @@ export default function ChatScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <Image
-                      source={{ uri: "https://c1.klipartz.com/pngpicture/1019/109/sticker-png-circle-logo-user-management-information-technology-company-user-profile-orange.png" }}
-                      style={styles.avatarUser}
-                      resizeMode="cover"
-                    />
+                    <MaterialIcons name="person" size={20} color="#fff" />
                   )}
                 </View>
               )}
