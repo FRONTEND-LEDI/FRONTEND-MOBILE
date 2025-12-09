@@ -37,6 +37,11 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
 
   const currentForoTitle = allForos.find((f) => f._id === comment?.idForo)?.title || "Foro Desconocido";
 
+  const mainUserName = (comment && typeof comment.idUser === "object" && comment.idUser?.userName) || "Usuario";
+  const mainUserObj = comment && (!comment.idUser || typeof comment.idUser === "string" ? null : comment.idUser);
+  const mainAvatar = mainUserObj?.avatar;
+  const mainImgLevel = mainUserObj?.imgLevel;
+
   const fetchAnswers = useCallback(() => {
     if (!comment) {
       setIsFetching(false);
@@ -112,16 +117,23 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
 
   const AnswerItem: React.FC<{ answer: Comment }> = ({ answer }) => {
     const replyUserName = (typeof answer.idUser === "object" && answer.idUser?.userName) || "Usuario";
-    const avatar = !comment?.idUser || typeof comment.idUser === "string" ? getInitials(replyUserName) : comment.idUser.avatar;
-    const imgLevel = !comment?.idUser || typeof comment.idUser === "string" ? getInitials(replyUserName) : comment.idUser.imgLevel;
+    const replyUserObj = (!answer.idUser || typeof answer.idUser === "string") ? null : answer.idUser;
+    const replyAvatar = replyUserObj?.avatar;
+    const replyImgLevel = replyUserObj?.imgLevel;
 
     return (
       <View key={answer._id} className="py-3 border-b border-gray-100">
         <View className="flex-row items-start">
-          <View className="w-10 h-10 rounded-full items-center justify-center mr-3">
-            <Image source={{ uri: avatar }} className="w-full h-full rounded-full" resizeMode="cover" />
+          <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-gray-200 overflow-hidden">
+            {replyAvatar ? (
+              <Image source={{ uri: replyAvatar }} className="w-full h-full" resizeMode="cover" />
+            ) : (
+              <Text className="text-gray-500 font-bold">{getInitials(replyUserName)}</Text>
+            )}
           </View>
-          <Image source={{ uri: imgLevel }} className="absolute w-12 h-12 " resizeMode="cover" />
+          {replyImgLevel && (
+            <Image source={{ uri: replyImgLevel }} className="absolute w-12 h-12" resizeMode="cover" style={{ left: -5, top: -5 }} />
+          )}
 
           <View className="flex-1">
             <Text className="font-bold text-sm mb-0.5 text-gray-700">{replyUserName}</Text>
@@ -135,7 +147,7 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
   return (
     <Modal transparent visible={isVisible} animationType="slide" onRequestClose={onClose}>
       <Pressable onPress={onClose} className="flex-1 bg-black/50 justify-end">
-        <Pressable className="bg-white rounded-t-3xl h-5/6 shadow-xl pt-4" onPress={() => {}}>
+        <Pressable className="bg-white rounded-t-3xl h-5/6 shadow-xl pt-4" onPress={() => { }}>
           <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
             <View className="flex-row justify-between items-center px-5 pb-3 border-b border-gray-100">
               <Text className="text-xl font-bold text-gray-800">Hilo de: {currentForoTitle}</Text>
@@ -149,11 +161,18 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
                 <View className="p-4 bg-indigo-50 rounded-xl mb-4 border border-indigo-200">
                   <Text className="text-sm font-bold text-indigo-600 mb-2">Publicación Original</Text>
                   <View className="flex-row items-start">
-                    <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3">
-                      <Text className="text-sm font-bold text-white">{getInitials(typeof comment.idUser === "object" ? comment.idUser?.userName : "")}</Text>
+                    <View className="w-8 h-8 rounded-full bg-orange-500 items-center justify-center mr-3 overflow-hidden">
+                      {mainAvatar ? (
+                        <Image source={{ uri: mainAvatar }} className="w-full h-full" resizeMode="cover" />
+                      ) : (
+                        <Text className="text-sm font-bold text-white">{getInitials(mainUserName)}</Text>
+                      )}
                     </View>
+                    {mainImgLevel && (
+                      <Image source={{ uri: mainImgLevel }} className="absolute w-10 h-10 -left-2 -top-2" resizeMode="cover" />
+                    )}
                     <View className="flex-1">
-                      <Text className="font-bold text-sm mb-0.5">{typeof comment.idUser === "object" ? comment.idUser?.userName : "Usuario"}</Text>
+                      <Text className="font-bold text-sm mb-0.5">{mainUserName}</Text>
                       <Text className="text-base text-gray-800">{comment.content}</Text>
                     </View>
                   </View>
@@ -164,10 +183,12 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
 
               {isFetching && <ActivityIndicator size="large" color={colors.primary} className="mt-5" />}
 
-              {!isFetching && answers.length > 0
-                ? answers.map((answer) => <AnswerItem key={answer._id} answer={answer} />)
-                : !isFetching && <Text className="text-center text-gray-500 mt-5">Sé el primero en responder.</Text>}
-            </ScrollView>
+              {
+                !isFetching && answers.length > 0
+                  ? answers.map((answer) => <AnswerItem key={answer._id} answer={answer} />)
+                  : !isFetching && <Text className="text-center text-gray-500 mt-5">Sé el primero en responder.</Text>
+              }
+            </ScrollView >
 
             <View className="p-3 border-t border-gray-200 bg-white flex-row items-center">
               <TextInput
@@ -187,10 +208,10 @@ const CommentsAnswers: React.FC<CommentsAnswersProps> = ({ isVisible, onClose, c
                 <Ionicons name="send" size={18} color="white" />
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+          </KeyboardAvoidingView >
+        </Pressable >
+      </Pressable >
+    </Modal >
   );
 };
 

@@ -61,7 +61,6 @@ export default function Forum() {
           if (!selectedForoId) {
             setDisplayedComment([...mainComments].reverse());
           } else {
-            // Si hay un foro seleccionado, filtramos de la lista global actualizada
             const foroComments = mainComments.filter((c) => c.idForo === selectedForoId);
             setDisplayedComment([...foroComments].reverse());
           }
@@ -115,9 +114,8 @@ export default function Forum() {
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
-  }, []); // Quitamos dependencias para que el socket no se reconecte al cambiar de filtro
+  }, []);
 
-  // Efecto separado para manejar cambios de filtro sin desconectar el socket
   useEffect(() => {
     if (socketRef.current && socketRef.current.connected) {
       fetchComments(selectedForoId);
@@ -170,7 +168,7 @@ export default function Forum() {
     >
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: 20, // Reduced padding since input is not absolute
+          paddingBottom: 20,
           paddingHorizontal: 5,
           paddingTop: 30,
         }}
