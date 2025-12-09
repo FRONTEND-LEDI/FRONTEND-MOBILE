@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const MAX_LIVES = 2;
+const MAX_LIVES = 1;
 
 const TypewriterQuestion = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState("");

@@ -185,7 +185,7 @@ const ProfileScreen = () => {
 
               {getFrameUrl() && (
                 <Image
-                  className="absolute -top-4 -left-4 w-[142px] h-[142px]"
+                  className="absolute -top-[25px] -left-[25px] w-[160px] h-[160px]"
                   source={{ uri: getFrameUrl() }}
                   resizeMode="contain"
                 />
